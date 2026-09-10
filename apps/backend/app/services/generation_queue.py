@@ -77,7 +77,43 @@ class GenerationQueueService:
             input_params = job.get("input_params", {})
             prompt = input_params.get("prompt", "")
 
-            # Simulate progressive rendering stages with real completion
+            # If workspace is image, trigger real image generation pipeline
+            if workspace == "image":
+                await db["generation_jobs"].update_one(
+                    {"_id": job_id},
+                    {"$set": {"progress": 35, "updated_at": datetime.now(timezone.utc)}}
+                )
+
+                from app.services.image_generation import get_image_generation_service
+                img_service = get_image_generation_service()
+
+                gen_result = await img_service.generate_and_save_image(
+                    user_id=job["user_id"],
+                    project_id=job["project_id"],
+                    prompt=prompt,
+                    negative_prompt=input_params.get("negative_prompt"),
+                    aspect_ratio=input_params.get("aspect_ratio", "1:1"),
+                    style=input_params.get("style", "Photorealistic"),
+                    seed=input_params.get("seed"),
+                    model=job.get("model"),
+                    provider=job.get("provider")
+                )
+
+                now = datetime.now(timezone.utc)
+                await db["generation_jobs"].update_one(
+                    {"_id": job_id},
+                    {"$set": {
+                        "status": "COMPLETED",
+                        "progress": 100,
+                        "output_asset_ids": [gen_result["asset_id"]],
+                        "output_urls": [gen_result["url"]],
+                        "updated_at": now,
+                        "completed_at": now
+                    }}
+                )
+                return
+
+            # Simulate progressive rendering stages with real completion for other workspaces
             await asyncio.sleep(0.5)
             await db["generation_jobs"].update_one(
                 {"_id": job_id},

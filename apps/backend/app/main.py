@@ -20,6 +20,7 @@ from app.api.rag import router as rag_router
 from app.api.assets import router as assets_router
 from app.api.tools_gateway import router as tools_gateway_router
 from app.api.generations import router as generations_router
+from app.api.canvas import router as canvas_router
 
 import sys
 # Reconfigure stdout/stderr to UTF-8 on Windows to safely handle AI emojis
@@ -75,6 +76,7 @@ app.include_router(rag_router)
 app.include_router(assets_router)
 app.include_router(tools_gateway_router)
 app.include_router(generations_router)
+app.include_router(canvas_router)
 
 
 @app.get("/")

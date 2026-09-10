@@ -126,3 +126,87 @@ async def list_project_generation_jobs(
         .to_list(None)
     )
     return [_to_job_response(j) for j in jobs]
+
+
+from pydantic import BaseModel
+
+class EnhancePromptRequest(BaseModel):
+    prompt: str
+    style: Optional[str] = "Photorealistic"
+
+class EnhancePromptResponse(BaseModel):
+    original_prompt: str
+    enhanced_prompt: str
+
+class SyncImageGenerateRequest(BaseModel):
+    project_id: str
+    prompt: str
+    negative_prompt: Optional[str] = None
+    aspect_ratio: Optional[str] = "1:1"
+    style: Optional[str] = "Photorealistic"
+    seed: Optional[int] = None
+    model: Optional[str] = None
+    provider: Optional[str] = None
+
+
+@router.post("/enhance-prompt", response_model=EnhancePromptResponse)
+async def enhance_prompt(
+    body: EnhancePromptRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Enriches a brief user prompt into a high-detail cinematic vision description.
+    """
+    p = body.prompt.strip()
+    style = body.style or "Photorealistic"
+    
+    try:
+        from app.services.providers.router import ProviderRouter
+        router_svc = ProviderRouter()
+        instruction = (
+            f"You are Yash.AI's creative visual prompt director. Take this short prompt: '{p}'. "
+            f"Style: {style}. Enhance it into a single rich, visually striking text-to-image prompt. "
+            f"Describe lighting, lens, mood, textures, depth of field, and compositional details. "
+            f"Output ONLY the prompt text, without quotes or intro."
+        )
+        response_text = ""
+        async for chunk in router_svc.route_generate_stream([{"role": "user", "content": instruction}], user_id=current_user["_id"]):
+            response_text += chunk
+        
+        enhanced = response_text.strip().strip('"')
+        if not enhanced or len(enhanced) < 10:
+            enhanced = f"{p}, masterpiece, hyperrealistic {style} aesthetic, cinematic lighting, volumetric atmosphere, 8k octane render detail"
+    except Exception:
+        enhanced = f"{p}, highly detailed, {style} visual aesthetic, soft cinematic lighting, intricate textures, 8k resolution"
+
+    return EnhancePromptResponse(
+        original_prompt=p,
+        enhanced_prompt=enhanced
+    )
+
+
+@router.post("/generate-image-sync")
+async def generate_image_sync(
+    body: SyncImageGenerateRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Synchronously generate an image asset and immediately return the persistent asset and download URL.
+    """
+    from app.services.image_generation import get_image_generation_service
+    service = get_image_generation_service()
+
+    result = await service.generate_and_save_image(
+        user_id=current_user["_id"],
+        project_id=body.project_id,
+        prompt=body.prompt,
+        negative_prompt=body.negative_prompt,
+        aspect_ratio=body.aspect_ratio or "1:1",
+        style=body.style or "Photorealistic",
+        seed=body.seed,
+        model=body.model,
+        provider=body.provider
+    )
+    return result
+

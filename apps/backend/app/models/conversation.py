@@ -1,17 +1,22 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from app.core.database import Base
+from typing import Optional, Dict, Any
 
-class Conversation(Base):
-    __tablename__ = "conversations"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    title = Column(String, nullable=False, default="New Chat")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-
-    user = relationship("User", back_populates="conversations")
-    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan", order_by="Message.created_at")
+def new_conversation(
+    user_id: str,
+    title: str = "New Chat",
+    project_id: Optional[str] = None
+) -> Dict[str, Any]:
+    now = datetime.now(timezone.utc)
+    return {
+        "_id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "title": title,
+        "project_id": project_id,
+        "pinned": False,
+        "archived": False,
+        "summary": None,
+        "created_at": now,
+        "updated_at": now,
+    }

@@ -6,6 +6,7 @@ from app.tools.web_search import WebSearchTool
 from app.tools.calculator import CalculatorTool
 from app.tools.python_sandbox import PythonSandboxTool
 from app.tools.file_tools import list_user_files, read_user_file_metadata, delete_user_file
+from app.tools.three_d_tools import THREE_D_TOOLS
 
 logger = logging.getLogger("yash.ai.tools.registry")
 
@@ -134,6 +135,10 @@ class ToolRegistry:
             requires_confirmation=True,
             handler=_exec_files_delete
         ))
+
+        # 7. 3D Creative Tools
+        for t in THREE_D_TOOLS:
+            self.register(t)
 
 
 _global_tool_registry = ToolRegistry()
