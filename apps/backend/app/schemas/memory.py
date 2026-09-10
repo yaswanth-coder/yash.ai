@@ -23,6 +23,8 @@ class MemorySettingsRequest(BaseModel):
 class MemorySettingsResponse(BaseModel):
     learning_enabled: bool
     total_memories: int
+    has_trained: Optional[bool] = False
+    last_trained_at: Optional[datetime] = None
 
 
 class TrainHistoryResponse(BaseModel):

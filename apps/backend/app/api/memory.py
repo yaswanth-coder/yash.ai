@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_db
@@ -75,16 +76,22 @@ async def create_memory(
 
 
 @router.post("/train", response_model=TrainHistoryResponse)
-@router.post("/train/", response_model=TrainHistoryResponse)
-async def train_ai_on_history(
+async def train_history(
     current_user: dict = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """
     Analyze the user's historical chat messages to extract personalized memories,
     tech preferences, and instructions to train future AI responses.
+    Marks the user's one-time training status as completed.
     """
     memories = await train_on_user_history(current_user["_id"], db)
+    now = datetime.now(timezone.utc)
+    await db["user_settings"].update_one(
+        {"user_id": current_user["_id"]},
+        {"$set": {"has_trained": True, "last_trained_at": now}},
+        upsert=True
+    )
     memory_items = [
         MemoryItem(
             id=m["id"],
@@ -133,13 +140,17 @@ async def get_memory_settings(
     current_user: dict = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    """Get the user's current memory and learning preferences."""
+    """Get the user's current memory and learning preferences, including training status."""
     settings_doc = await db["user_settings"].find_one({"user_id": current_user["_id"]})
     enabled = settings_doc.get("learning_enabled", True) if settings_doc else True
+    has_trained = settings_doc.get("has_trained", False) if settings_doc else False
+    last_trained = settings_doc.get("last_trained_at") if settings_doc else None
     memories = await get_user_memories(current_user["_id"], db)
     return MemorySettingsResponse(
         learning_enabled=enabled,
-        total_memories=len(memories)
+        total_memories=len(memories),
+        has_trained=has_trained,
+        last_trained_at=last_trained,
     )
 
 
@@ -155,8 +166,13 @@ async def update_memory_settings(
         {"$set": {"learning_enabled": body.learning_enabled}},
         upsert=True
     )
+    settings_doc = await db["user_settings"].find_one({"user_id": current_user["_id"]})
+    has_trained = settings_doc.get("has_trained", False) if settings_doc else False
+    last_trained = settings_doc.get("last_trained_at") if settings_doc else None
     memories = await get_user_memories(current_user["_id"], db)
     return MemorySettingsResponse(
         learning_enabled=body.learning_enabled,
-        total_memories=len(memories)
+        total_memories=len(memories),
+        has_trained=has_trained,
+        last_trained_at=last_trained,
     )

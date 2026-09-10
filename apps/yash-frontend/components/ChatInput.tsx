@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowUp,
   Paperclip,
@@ -10,7 +10,6 @@ import {
   MicOff,
   Globe,
   Square,
-  Sparkles,
 } from "lucide-react";
 import api from "@/lib/axios";
 
@@ -23,6 +22,31 @@ interface ChatInputProps {
   onToggleWebSearch?: (enabled: boolean) => void;
 }
 
+// Tiny animated waveform shown beside the mic while listening
+function VoiceWaveform() {
+  return (
+    <div className="flex items-center gap-[2px] h-4">
+      {[0.8, 1.4, 1.0, 1.8, 1.2, 1.6, 0.9].map((h, i) => (
+        <div
+          key={i}
+          className="w-[2.5px] rounded-full bg-red-400"
+          style={{
+            height: `${h * 4}px`,
+            animation: `voicePulse ${0.45 + i * 0.07}s ease-in-out infinite alternate`,
+            animationDelay: `${i * 55}ms`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes voicePulse {
+          from { transform: scaleY(0.5); opacity: 0.5; }
+          to   { transform: scaleY(1.3); opacity: 1.0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function ChatInput({
   onSendMessage,
   disabled,
@@ -32,71 +56,141 @@ export default function ChatInput({
   onToggleWebSearch,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
-  const [fileAttachment, setFileAttachment] = useState<{ path: string; name: string } | null>(null);
+  const [fileAttachment, setFileAttachment] = useState<{
+    path: string;
+    name: string;
+  } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
+  // interimText = words being recognized right now (not yet final)
+  const [interimText, setInterimText] = useState("");
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  // Tracks the confirmed (final) spoken text accumulated in this voice session
+  const confirmedRef = useRef("");
+  const autoSendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize Web Speech API
+  // ── Speech API setup ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        setSpeechSupported(true);
-        const recog = new SpeechRecognition();
-        recog.continuous = true;
-        recog.interimResults = true;
-        recog.lang = "en-US";
+    if (typeof window === "undefined") return;
+    const SR =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    setSpeechSupported(true);
 
-        recog.onresult = (event: any) => {
-          let transcript = "";
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            transcript += event.results[i][0].transcript;
-          }
-          if (transcript) {
-            setMessage((prev) => (prev ? `${prev} ${transcript}` : transcript));
-          }
-        };
+    const recog = new SR();
+    recog.continuous = true;
+    recog.interimResults = true; // stream words as they're spoken
+    recog.lang = "en-US";
+    recog.maxAlternatives = 1;
 
-        recog.onerror = (e: any) => {
-          console.warn("Speech recognition error:", e);
-          setIsListening(false);
-        };
+    recog.onstart = () => {
+      confirmedRef.current = "";
+      setInterimText("");
+    };
 
-        recog.onend = () => {
-          setIsListening(false);
-        };
+    recog.onresult = (event: any) => {
+      let finalPart = "";
+      let interimPart = "";
 
-        recognitionRef.current = recog;
+      for (let i = 0; i < event.results.length; i++) {
+        const r = event.results[i];
+        if (r.isFinal) {
+          finalPart += r[0].transcript;
+        } else {
+          interimPart += r[0].transcript;
+        }
       }
-    }
+
+      // Update confirmed text and show it in the textarea
+      if (finalPart) {
+        confirmedRef.current = finalPart.trim();
+        // Write confirmed text to the textarea immediately
+        setMessage(confirmedRef.current);
+        setInterimText("");
+
+        // Focus textarea so user can see/edit
+        textareaRef.current?.focus();
+
+        // Auto-send after 1.8 s of silence
+        if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
+        autoSendTimerRef.current = setTimeout(() => {
+          if (confirmedRef.current.trim()) sendVoiceMessage();
+        }, 1800);
+      }
+
+      // Show interim words live in the textarea (combined confirmed + interim)
+      // so the user sees words typing out in real-time
+      const combined = confirmedRef.current
+        ? confirmedRef.current + (interimPart ? " " + interimPart : "")
+        : interimPart;
+
+      setMessage(combined);
+      setInterimText(interimPart); // track separately for styling hint
+    };
+
+    recog.onerror = (e: any) => {
+      if (e.error !== "no-speech") console.warn("Speech error:", e.error);
+      setIsListening(false);
+      setInterimText("");
+    };
+
+    recog.onend = () => {
+      setIsListening(false);
+      setInterimText("");
+    };
+
+    recognitionRef.current = recog;
   }, []);
+
+  const sendVoiceMessage = useCallback(() => {
+    const text = confirmedRef.current.trim() || message.trim();
+    if (!text) return;
+    if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
+    try { recognitionRef.current?.stop(); } catch {}
+    setIsListening(false);
+    setInterimText("");
+    confirmedRef.current = "";
+    onSendMessage(text, fileAttachment?.path || undefined);
+    setMessage("");
+    setFileAttachment(null);
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+  }, [message, onSendMessage, fileAttachment]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) return;
     if (isListening) {
-      recognitionRef.current.stop();
+      if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
+      try { recognitionRef.current.stop(); } catch {}
       setIsListening(false);
+      setInterimText("");
     } else {
+      // Clear previous voice session, keep any manually typed text
+      confirmedRef.current = message.trim(); // start from what's already typed
+      setInterimText("");
       try {
         recognitionRef.current.start();
         setIsListening(true);
+        textareaRef.current?.focus();
       } catch (e) {
         console.error("Could not start speech recognition:", e);
       }
     }
   };
 
-  // Auto-resize textarea
+  // ── Textarea auto-resize ───────────────────────────────────────────────────
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        180
+      )}px`;
     }
   }, [message]);
 
@@ -109,37 +203,33 @@ export default function ChatInput({
 
   const handleSubmit = () => {
     if ((!message.trim() && !fileAttachment) || disabled || uploading) return;
+    if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
     if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
+      try { recognitionRef.current.stop(); } catch {}
       setIsListening(false);
+      setInterimText("");
     }
     onSendMessage(message, fileAttachment?.path);
     setMessage("");
     setFileAttachment(null);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
+    confirmedRef.current = "";
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate size (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
       alert("File size exceeds 20MB limit.");
       return;
     }
-
     try {
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
-
       const response = await api.post("/files/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       setFileAttachment({
         path: response.data.file_path,
         name: response.data.filename,
@@ -153,13 +243,16 @@ export default function ChatInput({
     }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-4xl mx-auto w-full px-4 pb-4">
       {/* File Attachment Card */}
       {fileAttachment && (
-        <div className="flex items-center gap-2 mb-2 p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl w-fit text-xs text-zinc-200 animate-fadeIn">
+        <div className="flex items-center gap-2 mb-2 p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl w-fit text-xs text-zinc-200">
           <FileText className="w-4 h-4 text-blue-400" />
-          <span className="truncate max-w-[220px] font-medium">{fileAttachment.name}</span>
+          <span className="truncate max-w-[220px] font-medium">
+            {fileAttachment.name}
+          </span>
           <button
             onClick={() => setFileAttachment(null)}
             className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white"
@@ -169,17 +262,53 @@ export default function ChatInput({
         </div>
       )}
 
+      {/* Voice status strip — only visible while listening */}
+      {isListening && (
+        <div className="flex items-center gap-2 mb-1.5 px-3">
+          <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
+            Listening
+          </span>
+          <VoiceWaveform />
+          {interimText ? (
+            <span className="text-[10px] text-zinc-500 italic truncate max-w-[200px]">
+              "{interimText}"
+            </span>
+          ) : null}
+          <span className="ml-auto text-[10px] text-zinc-600">
+            Pause 1.8 s → auto-send &nbsp;|&nbsp; or press ↵
+          </span>
+        </div>
+      )}
+
       {/* Main Composer Box */}
-      <div className="relative rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-xl focus-within:border-blue-500/60 transition-all p-2.5">
+      <div
+        className={`relative rounded-2xl bg-zinc-900/90 border shadow-xl transition-all duration-200 p-2.5 ${
+          isListening
+            ? "border-red-500/40 ring-1 ring-red-500/10"
+            : "border-zinc-800/90 focus-within:border-blue-500/60"
+        }`}
+      >
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            // If the user manually edits, sync the confirmed ref
+            confirmedRef.current = e.target.value;
+          }}
           onKeyDown={handleKeyDown}
-          placeholder={isListening ? "Listening... speak now" : "Ask Yash.AI anything (Shift + Enter for new line)..."}
+          placeholder={
+            isListening
+              ? "Speak now — words will appear here..."
+              : "Ask Yash.AI anything (Shift + Enter for new line)..."
+          }
           rows={1}
           disabled={disabled || isStreaming}
-          className="w-full bg-transparent px-2.5 py-1 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none max-h-44 custom-scrollbar"
+          className={`w-full bg-transparent px-2.5 py-1 text-sm focus:outline-none resize-none max-h-44 custom-scrollbar transition-colors ${
+            isListening && interimText && !confirmedRef.current
+              ? "text-zinc-400" // interim-only text appears slightly greyed
+              : "text-zinc-100"
+          } placeholder-zinc-500`}
         />
 
         {/* Action Controls Bar */}
@@ -198,29 +327,40 @@ export default function ChatInput({
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || uploading || isStreaming}
               className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors disabled:opacity-40"
-              title="Attach File / Document / Image"
+              title="Attach File"
             >
               <Paperclip className="w-4 h-4" />
             </button>
 
-            {/* Voice Input Button */}
+            {/* Mic Button */}
             {speechSupported && (
               <button
                 type="button"
                 onClick={toggleListening}
                 disabled={disabled || isStreaming}
-                className={`p-2 rounded-xl transition-colors ${
+                className={`relative p-2 rounded-xl transition-all disabled:opacity-40 ${
                   isListening
-                    ? "bg-red-500/20 text-red-400 animate-pulse border border-red-500/30"
+                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
                 }`}
-                title={isListening ? "Stop Voice Input" : "Voice Input (Microphone)"}
+                title={
+                  isListening
+                    ? "Stop voice input"
+                    : "Voice input — words type into the box as you speak"
+                }
               >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                {isListening ? (
+                  <MicOff className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+                {isListening && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                )}
               </button>
             )}
 
-            {/* Web Search Quick Toggle */}
+            {/* Web Search Toggle */}
             {onToggleWebSearch && (
               <button
                 type="button"
@@ -230,10 +370,12 @@ export default function ChatInput({
                     ? "bg-blue-500/15 text-blue-400 border border-blue-500/25 font-semibold"
                     : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
                 }`}
-                title="Toggle Web Search Tool"
+                title="Toggle Web Search"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Search: {webSearchEnabled ? "ON" : "OFF"}</span>
+                <span className="hidden sm:inline">
+                  Search: {webSearchEnabled ? "ON" : "OFF"}
+                </span>
               </button>
             )}
           </div>
@@ -252,8 +394,10 @@ export default function ChatInput({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={(!message.trim() && !fileAttachment) || disabled || uploading}
-                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-30 disabled:hover:bg-blue-600 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+                disabled={
+                  (!message.trim() && !fileAttachment) || disabled || uploading
+                }
+                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-30 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
                 title="Send message"
               >
                 <ArrowUp className="w-4 h-4" />

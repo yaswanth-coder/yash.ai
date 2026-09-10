@@ -267,7 +267,7 @@ export default function ThreeDStudioPage() {
   const [autoRotate, setAutoRotate] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const getToken = () => typeof window !== "undefined" ? localStorage.getItem("access_token") || "" : "";
+  const getToken = () => typeof window !== "undefined" ? (localStorage.getItem("yash_ai_token") || localStorage.getItem("access_token") || "") : "";
 
   const selectedObj = objects.find((o) => o.id === selectedId);
 

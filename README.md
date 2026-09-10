@@ -1,435 +1,208 @@
 <div align="center">
 
-<h1>🤖 Yash.AI</h1>
+# 🤖 Yash.AI — Personal AI & Creative Intelligence Platform
 
-**Your intelligent personal AI assistant — powered by Gemini 2.5 Flash**
+**Enterprise Full-Stack AI Platform with Multi-Model Intelligence, Create Studio, Long-Term Memory, and Cross-Platform PWA/Android Support**
 
-*Chat naturally. Attach files. Remember your history. All in one sleek interface.*
+*Stream token-by-token. Generate media in Create Studio. Manage Project Workspaces. Install anywhere as a Web or Android App.*
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org)
-[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org)
+[![Gemini](https://img.shields.io/badge/Gemini-3.6%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
+[![PWA Ready](https://img.shields.io/badge/PWA-Android%20%26%20Web-purple?style=flat-square&logo=android&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-[Quick Start](#-quick-start) · [Features](#-features) · [Architecture](#-architecture) · [API Reference](#-api-reference) · [Project Structure](#-project-structure)
+[⚡ Quick Start](#-quick-start) · [✨ Features](#-features) · [🎨 Create Studio](#-create-studio) · [🧠 Multi-Model AI](#-multi-model-ai-architecture) · [📱 Web & Android Hosting](#-web--android-app-hosting) · [📡 API Docs](#-api-endpoints)
 
 </div>
 
 ---
 
-## ✨ Key Highlights
+## ✨ Key Capabilities
 
-✅ **Natural Language Chat** — Ask anything, get clean, well-formatted Markdown responses  
-✅ **Gemini 2.5 Flash** — State-of-the-art Google AI model with long context and file understanding  
-✅ **File Attachments** — Upload PDFs and images; AI reads and reasons about them  
-✅ **Full Conversation History** — Every chat thread saved, searchable, and resumable  
-✅ **JWT Auth** — Secure user accounts with token-based authentication  
-✅ **Guest Mode** — Try the AI without signing up — no account required  
-✅ **Multi-Agent Architecture** — Specialized agents for coding, research, vision, and documents (extensible)  
-✅ **Docker Ready** — Full-stack deployment with one command  
-✅ **Responsive UI** — Dark-mode Next.js frontend, works beautifully on mobile and desktop  
-
----
-
-## 💡 Why Yash.AI?
-
-Most AI wrappers are just thin shells over an API. Yash.AI is different:
-
-- **Persistent memory** — conversations are stored per-user in SQLite so you never lose context
-- **File intelligence** — upload a PDF or screenshot and ask questions about it in the same chat
-- **Extensible agent layer** — specialized agents for coding, research, document analysis, and vision are wired in and ready to be built upon
-- **Production-grade backend** — FastAPI + SQLAlchemy + JWT auth, not a weekend prototype
+- ⚡ **High-Speed SSE Streaming** — Token-by-token real-time generation with sub-100ms first-chunk response time.
+- 🧠 **Multi-Provider AI Router** — Seamless fallback across **Google Gemini (3.6 Flash)**, **Ollama Local LLMs**, **Groq**, **OpenAI**, and **Anthropic**.
+- 🎨 **Create Studio Workspaces** — Dedicated creative generation hubs for **Images**, **Videos**, **UI/Canvas Design**, **3D Models**, **Code**, **Audio**, **Documents**, and **Deep Research**.
+- 📁 **Projects & Context Workspaces** — Attach documents, custom instructions, and organize conversational threads into dedicated projects.
+- 💾 **Long-Term Memory & Learning** — Learns user preferences, coding habits, and project context silently over time.
+- 📱 **Cross-Platform PWA & Android App** — Installable directly onto Android phones, tablets, and desktops with standalone fullscreen UI and offline service workers.
+- 🛡️ **Enterprise Security & Hybrid DB** — JWT Auth, BCrypt password hashing, and auto-switching **MongoDB Atlas** with SQLite fallback.
+- 🌐 **Multilingual Auto-Fluency** — Native fluency in Telugu, Hindi, Spanish, French, Japanese, and 50+ languages.
 
 ---
 
-## 🚀 Features
+## 🎨 Create Studio Suite
 
-### 💬 AI Chat with Gemini 2.5 Flash
+Yash.AI includes a unified creative suite accessible from the sidebar:
 
-Every message is routed through Google's latest Gemini model with a custom system prompt:
-
-> *"You are Yash.AI, a highly capable, articulate, and intelligent personal AI assistant built to help users with coding, research, writing, problem-solving, and general inquiries."*
-
-Responses are clean, structured **Markdown** with syntax-highlighted code blocks rendered directly in the browser.
-
-### 📎 File Attachments
-
-Attach files to any message — the AI reads them and incorporates their content into its response:
-
-| Format | Handling |
-|--------|----------|
-| `.pdf` | Text extracted via `pypdf`, injected as context |
-| `.png` / `.jpg` / `.jpeg` / `.webp` | Sent as raw image bytes to Gemini Vision |
-
-### 🗂️ Conversation Management
-
-- Every new chat for a logged-in user auto-creates a titled conversation
-- Resume any past conversation — full history is re-fed to the model for coherent multi-turn dialogue
-- Delete conversations from the sidebar
-- Guest users can still chat (no history saved)
-
-### 🔐 Authentication
-
-- Register with email + password
-- JWT tokens with 7-day expiry stored in `localStorage`
-- Protected routes redirect to `/login`
-- `/auth/me` endpoint validates the current token
-
-### 🤖 Multi-Agent Architecture (Extensible)
-
-The `agents/` layer is built and ready to be extended:
-
-| Agent | Status | Purpose |
-|-------|--------|---------|
-| `CodingAgent` | 🔧 Scaffold | Code generation, debugging, explanation |
-| `ResearchAgent` | 🔧 Scaffold | Web research, fact-finding, summarization |
-| `DocumentAgent` | 🔧 Scaffold | Deep document Q&A and analysis |
-| `VisionAgent` | 🔧 Scaffold | Image description and visual reasoning |
-| `PlannerAgent` | 🔧 Scaffold | Task decomposition and multi-step planning |
+| Workspace | Route | Capabilities |
+| :--- | :--- | :--- |
+| 🖼️ **Image Studio** | `/create/image` | Multi-aspect ratio text-to-image, style presets (Cinematic, Anime, Cyberpunk, 3D Render) |
+| 🎬 **Video Studio** | `/create/video` | AI video generation, prompt-to-motion synthesis, aspect ratios (16:9, 9:16) |
+| ✨ **Design Canvas** | `/create/design` | Interactive infinite canvas, visual node layouts, wireframing |
+| 📦 **3D Studio** | `/create/3d` | Text-to-3D asset generation, mesh preview, `.obj`/`.gltf` export |
+| 💻 **Code Studio** | `/create/code` | Multi-language code editor, syntax validation, algorithmic problem solving |
+| 🎵 **Audio Studio** | `/create/audio` | Text-to-speech synthesis, multi-voice ambient music generation |
+| 📄 **Doc Synthesis** | `/create/documents` | Deep PDF analysis, automatic executive summarization, Q&A |
+| 🔍 **Deep Research** | `/create/research` | Multi-step agent research with structured citations |
 
 ---
 
-## 🏗️ Architecture
+## 🧠 Multi-Model AI Architecture
 
 ```
-User (browser)
-      │
-      ▼
-Next.js Frontend (port 3000)
-  ┌─────────────────────────────────────────┐
-  │  /login  /register  /chat               │
-  │  Sidebar · ChatMessage · ChatInput      │
-  │  react-markdown · lucide-react          │
-  └───────────────┬─────────────────────────┘
-                  │ HTTP / REST (axios)
-                  ▼
-FastAPI Backend (port 8000)
-  ┌─────────────────────────────────────────┐
-  │  /auth   /chat   /conversations  /files │
-  │                                         │
-  │  ┌─────────────┐   ┌─────────────────┐  │
-  │  │  Auth Layer │   │  Chat Service   │  │
-  │  │  JWT+BCrypt │   │  Gemini 2.5 SDK │  │
-  │  └─────────────┘   └────────┬────────┘  │
-  │                             │            │
-  │  ┌──────────────────────────▼──────┐    │
-  │  │         Agent Orchestrator      │    │
-  │  │  Coding · Research · Vision     │    │
-  │  │  Document · Planner             │    │
-  │  └─────────────────────────────────┘    │
-  └───────┬──────────────────┬──────────────┘
-          │                  │
-          ▼                  ▼
-     SQLite (yash.db)    uploads/
-     Users · Convs       PDFs · Images
-     Messages
+                      ┌────────────────────────────────────────┐
+                      │        User Prompt / Attachment        │
+                      └───────────────────┬────────────────────┘
+                                          │
+                                          ▼
+                      ┌────────────────────────────────────────┐
+                      │    Yash.AI Dynamic Provider Router     │
+                      └───────┬───────────┬────────────┬───────┘
+                              │           │            │
+            ┌─────────────────▼┐   ┌──────▼──────┐   ┌─▼────────────────┐
+            │ Google Gemini    │   │ Local Ollama│   │ Groq / Anthropic │
+            │ (3.6 Flash)      │   │ (Llama/Qwen)│   │ / OpenAI         │
+            └──────────────────┘   └─────────────┘   └──────────────────┘
 ```
 
----
-
-## 🗃️ Database Schema
-
-```sql
--- User accounts
-CREATE TABLE users (
-    id            TEXT PRIMARY KEY,
-    email         TEXT UNIQUE NOT NULL,
-    full_name     TEXT,
-    password_hash TEXT NOT NULL,
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Chat conversations (per user)
-CREATE TABLE conversations (
-    id         TEXT PRIMARY KEY,
-    user_id    TEXT REFERENCES users(id),
-    title      TEXT DEFAULT 'New Chat',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Individual messages within a conversation
-CREATE TABLE messages (
-    id              TEXT PRIMARY KEY,
-    conversation_id TEXT REFERENCES conversations(id),
-    role            TEXT NOT NULL,   -- 'user' | 'assistant'
-    content         TEXT NOT NULL,
-    file_path       TEXT,            -- path to uploaded attachment (if any)
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
----
-
-## 📡 API Reference
-
-### Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/auth/register` | Register new user → returns JWT token |
-| `POST` | `/auth/login` | Login → returns JWT token |
-| `GET` | `/auth/me` | Get current authenticated user |
-
-### Chat
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/chat/` | Send a message (with optional `conversation_id` and `file_path`) |
-
-**Request body:**
-```json
-{
-  "message": "Explain the contents of this PDF",
-  "conversation_id": "abc-123",
-  "file_path": "/uploads/uuid_document.pdf"
-}
-```
-
-**Response:**
-```json
-{
-  "response": "The document discusses...",
-  "conversation_id": "abc-123"
-}
-```
-
-### Conversations
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/conversations/` | List all conversations for current user |
-| `POST` | `/conversations/` | Create a new conversation |
-| `GET` | `/conversations/{id}` | Get full conversation with all messages |
-| `DELETE` | `/conversations/{id}` | Delete a conversation |
-
-### Files
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/files/upload` | Upload a file (PDF, PNG, JPG, JPEG, WEBP) |
-| `GET` | `/files/download/{filename}` | Download an uploaded file |
+The AI router prioritizes high-speed, zero-cost models first and automatically handles failovers and rate limits without breaking user sessions.
 
 ---
 
 ## ⚡ Quick Start
 
 ### Prerequisites
-
-- **Python 3.10+**
-- **Node.js 18+**
-- A free [Google AI Studio API key](https://aistudio.google.com/) (Gemini)
+- **Python 3.10+** (Tested on Python 3.11, 3.12, 3.14)
+- **Node.js 18+** / **npm**
+- (Optional) [Google Gemini API Key](https://aistudio.google.com/)
 
 ---
 
 ### 1. Clone the Repository
-
 ```bash
-git clone https://github.com/yourusername/yash.AI
+git clone https://github.com/yourusername/yash.AI.git
 cd yash.AI
 ```
 
 ---
 
-### 2. Backend Setup
+### 2. Run the Backend API (FastAPI)
 
 ```bash
+# Navigate to backend folder
 cd apps/backend
 
-# Create and activate virtual environment
-python -m venv venv
-venv\Scripts\activate       # Windows
-# source venv/bin/activate  # Linux/macOS
-
 # Install dependencies
-pip install -r requirement.txt
-```
+pip install -r requirements.txt
 
-**Create your `.env` file:**
-```env
-GEMINI_API_KEY=your-google-ai-studio-key-here
-DATABASE_URL=sqlite:///./yash.db
-JWT_SECRET_KEY=change-this-in-production
-JWT_ALGORITHM=HS256
+# Start backend server
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-
-**Run the backend:**
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-
-Interactive API docs available at: `http://localhost:8000/docs`
+> 📖 **API Docs & Swagger:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ---
 
-### 3. Frontend Setup
+### 3. Run the Frontend (Next.js)
 
+Open a **second terminal**:
 ```bash
+# Navigate to frontend folder
 cd apps/yash-frontend
 
 # Install dependencies
 npm install
 
-# Configure environment
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
-
-# Run the dev server
+# Start Next.js development server
 npm run dev
 ```
-
-Open: `http://localhost:3000`
+> 🌐 **Live Web App:** [http://localhost:3000/chat](http://localhost:3000/chat)
 
 ---
 
-### 4. Docker (Full Stack)
-
+### 4. (Alternative) Run with Docker Compose
+To launch MongoDB, Backend, and Frontend all in one command:
 ```bash
-# From project root — spins up frontend, backend, PostgreSQL, Redis, ChromaDB
-docker-compose up --build
-```
-
-| Service | URL |
-|---------|-----|
-| Frontend | `http://localhost:3000` |
-| Backend | `http://localhost:8000` |
-| API Docs | `http://localhost:8000/docs` |
-
----
-
-## 🗂️ Project Structure
-
-```
-yash.AI/
-├── docker-compose.yml              # Full-stack Docker orchestration
-│
-├── apps/
-│   ├── backend/                    # FastAPI Python backend
-│   │   ├── app/
-│   │   │   ├── main.py             # FastAPI app entry point
-│   │   │   ├── agents/             # Specialized AI agent modules
-│   │   │   │   ├── coding.py           # Code generation agent
-│   │   │   │   ├── document.py         # Document analysis agent
-│   │   │   │   ├── research.py         # Research agent
-│   │   │   │   ├── vision.py           # Image understanding agent
-│   │   │   │   └── planner.py          # Task planning agent
-│   │   │   ├── api/                # REST API route handlers
-│   │   │   │   ├── auth.py             # Register, Login, /me
-│   │   │   │   ├── chat.py             # Core chat endpoint
-│   │   │   │   ├── conversations.py    # CRUD for conversations
-│   │   │   │   └── files.py            # File upload/download
-│   │   │   ├── core/               # App config & shared utilities
-│   │   │   │   ├── config.py           # Settings (reads .env)
-│   │   │   │   ├── database.py         # SQLAlchemy engine + session
-│   │   │   │   ├── deps.py             # Dependency injection
-│   │   │   │   └── security.py         # JWT + password hashing
-│   │   │   ├── models/             # SQLAlchemy ORM models
-│   │   │   │   ├── user.py
-│   │   │   │   ├── conversation.py
-│   │   │   │   └── message.py
-│   │   │   ├── schemas/            # Pydantic request/response schemas
-│   │   │   ├── services/           # Business logic
-│   │   │   │   ├── gemini.py           # Google Gemini 2.5 integration
-│   │   │   │   └── file_service.py     # PDF/image content extraction
-│   │   │   ├── memory/             # (Planned) Vector memory / RAG
-│   │   │   └── rag/                # (Planned) Retrieval-augmented gen
-│   │   ├── uploads/                # Uploaded files (PDFs, images)
-│   │   ├── yash.db                 # SQLite database
-│   │   └── requirement.txt
-│   │
-│   └── yash-frontend/              # Next.js 16 TypeScript frontend
-│       ├── app/
-│       │   ├── chat/page.tsx       # Main chat interface
-│       │   ├── login/page.tsx      # Login page
-│       │   └── register/           # Registration page
-│       ├── components/
-│       │   ├── Sidebar.tsx             # Conversation list + user info
-│       │   ├── ChatMessage.tsx         # Message bubble + markdown
-│       │   ├── ChatInput.tsx           # Input bar + file attachment
-│       │   ├── ThinkingIndicator.tsx   # AI loading animation
-│       │   └── EmptyState.tsx          # Suggested prompts on new chat
-│       └── services/               # Axios API client functions
-│           ├── chat.ts
-│           ├── conversations.ts
-│           └── auth.ts
+cd yash.AI
+docker compose up --build
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## 📱 Web & Android App Hosting
 
-| Layer | Technology |
-|-------|-----------|
-| **Language (Backend)** | Python 3.10+ |
-| **Web Framework** | FastAPI 0.115+ |
-| **AI / LLM** | Google Gemini 2.5 Flash (`google-genai` SDK) |
-| **Auth** | JWT (`python-jose`) + BCrypt (`passlib`) |
-| **Database** | SQLite via SQLAlchemy 2.0 (Postgres-ready via Docker) |
-| **File Processing** | `pypdf` (PDF text) + raw bytes (images → Gemini Vision) |
-| **Language (Frontend)** | TypeScript + React 19 |
-| **Frontend Framework** | Next.js 16 |
-| **Styling** | Tailwind CSS v4 |
-| **Markdown Rendering** | `react-markdown` + `remark-gfm` |
-| **HTTP Client** | Axios |
-| **Icons** | Lucide React |
-| **Container** | Docker + Docker Compose |
-| **Cache / Queue** | Redis (Docker, planned) |
-| **Vector DB** | ChromaDB (Docker, planned for RAG) |
+### 🌐 Deploying the Web App (Vercel + Render)
 
----
+1. **Frontend (Vercel)**:
+   - Connect your GitHub repo to [Vercel](https://vercel.com).
+   - Set **Root Directory** to `apps/yash-frontend`.
+   - Set Environment Variable: `NEXT_PUBLIC_API_URL=https://your-backend.onrender.com`
+   - Deploy!
 
-## 🔒 Security
-
-| Concern | Mitigation |
-|---------|-----------|
-| **API Keys** | Environment variables only — never hardcoded |
-| **Passwords** | BCrypt hashed — never stored in plaintext |
-| **JWT Tokens** | 7-day expiry, HS256 signed with configurable secret key |
-| **File Uploads** | Extension whitelist: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp` |
-| **CORS** | Restricted to `localhost:3000` in development |
-| **SQL Injection** | Prevented by SQLAlchemy ORM parameterized queries |
+2. **Backend (Render.com / Railway / Fly.io)**:
+   - Create a Web Service with **Root Directory** `apps/backend`.
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Set Environment Variables:
+     - `DATABASE_URL=mongodb+srv://...` (Free MongoDB Atlas)
+     - `GEMINI_API_KEY=your_gemini_key`
+     - `JWT_SECRET=your_secret_key`
+     - `CORS_ORIGINS=*`
 
 ---
 
-## 🗺️ Roadmap
+### 📱 Installing on Android Devices
 
-- [ ] ChromaDB RAG — upload documents and ask questions across an entire knowledge base
-- [ ] Activate specialized agents (Coding, Research, Vision, Document, Planner)
-- [ ] Streaming responses — token-by-token output like ChatGPT
-- [ ] Voice input via Web Speech API
-- [ ] PostgreSQL migration for multi-user production deployment
-- [ ] Shareable conversation links
-- [ ] Export chat history to PDF / Markdown
-- [ ] Plugin/tool calling — web search, calculator, code execution
-- [ ] Admin dashboard — user management and usage stats
-- [ ] Mobile app (React Native)
+1. **Direct PWA Install (No Store Needed)**:
+   - Open your live website on Android in Google Chrome.
+   - Tap **Add to Home screen** or **Install App**.
+   - Yash.AI installs as a standalone fullscreen app with its own app icon and splash screen.
+
+2. **Generate Native APK (`.apk` / `.aab`)**:
+   - Go to [PWABuilder.com](https://www.pwabuilder.com) and enter your live URL.
+   - Click **Package for Android** to generate a signed `.apk` or `.aab` for the Google Play Store.
+   - Or use the included `capacitor.config.json` via `@capacitor/android`.
 
 ---
 
-## 🧠 What This Demonstrates
+## 📡 API Endpoints
 
-| Area | Implementation |
-|------|---------------|
-| **Full-Stack AI App** | FastAPI REST backend + Next.js frontend, fully integrated |
-| **LLM Integration** | Gemini 2.5 Flash with multi-turn history, file context, and system prompts |
-| **Multi-modal AI** | PDF text extraction + image bytes sent directly to Gemini Vision |
-| **Auth & Security** | JWT tokens, BCrypt password hashing, protected routes |
-| **Persistent Memory** | SQLAlchemy ORM with conversation threading per user |
-| **Multi-Agent Design** | Scaffolded agent modules ready to extend with specialized capabilities |
-| **Production Patterns** | Dependency injection, Pydantic schema validation, modular routing |
-| **Docker Deployment** | Multi-service compose: frontend, backend, PostgreSQL, Redis, ChromaDB |
+### 🔐 Authentication (`/auth`)
+- `POST /auth/register` — Register a new user account.
+- `POST /auth/login` — Authenticate and receive JWT token.
+- `GET /auth/me` — Verify authenticated profile.
+
+### 💬 AI Streaming & Chat (`/chat`)
+- `POST /chat/` — Standard request-response chat.
+- `POST /chat/stream` — Real-time Server-Sent Events (SSE) token stream.
+
+### 📁 Projects & Conversations
+- `GET /conversations/` — List active conversation threads.
+- `GET /projects/` — List user workspaces.
+- `POST /projects/` — Create a project workspace with context documents.
+
+### 🧠 Personas & Memory (`/personas`, `/memory`)
+- `GET /personas/` — Available AI specialist agents.
+- `GET /memory/` — List stored user habits and context.
+- `POST /memory/train` — Run one-time history training.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies Used |
+| :--- | :--- |
+| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4, Lucide Icons |
+| **Backend API** | FastAPI, Uvicorn, Pydantic v2, Python-Jose (JWT), BCrypt |
+| **AI Providers** | Google GenAI SDK (`gemini-3.6-flash`), Ollama, Groq, OpenAI, Anthropic |
+| **Database** | MongoDB (Motor / PyMongo) + SQLite async fallback |
+| **Mobile & PWA** | Web App Manifest, Service Worker (`sw.js`), Capacitor |
+| **DevOps** | Docker, Docker Compose, Multi-stage Alpine builds |
 
 ---
 
 ## 📄 License
 
-MIT © 2026 [Yaswanth Kumar](https://github.com/yaswanthkumar)
-
----
-
-<div align="center">
-
-Built with &nbsp;⚡ FastAPI &nbsp;·&nbsp; 🤖 Gemini 2.5 Flash &nbsp;·&nbsp; ⚛️ Next.js &nbsp;·&nbsp; 🐍 Python &nbsp;·&nbsp; 🐳 Docker
-
-</div>
+Distributed under the **MIT License**. Created by [Yaswanth Kumar](https://github.com/yaswanthkumar).

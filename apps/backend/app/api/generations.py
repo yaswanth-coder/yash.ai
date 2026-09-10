@@ -210,3 +210,19 @@ async def generate_image_sync(
     )
     return result
 
+
+
+@router.get("/queue/status")
+async def get_queue_status(
+    current_user: dict = Depends(get_current_user),
+    queue: GenerationQueueService = Depends(get_generation_queue)
+):
+    """
+    Returns real-time worker and queue processing metrics.
+    """
+    return {
+        "status": "healthy",
+        "active_jobs": len(queue._running_tasks) if hasattr(queue, "_running_tasks") else 0,
+        "queued_jobs": queue.job_queue.qsize() if hasattr(queue, "job_queue") else 0,
+        "max_concurrent": getattr(queue, "max_concurrent_jobs", 3)
+    }

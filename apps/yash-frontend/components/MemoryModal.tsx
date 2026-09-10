@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Brain,
   Sparkles,
@@ -8,11 +9,13 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
+  AlertCircle,
   Zap,
   Info,
   RefreshCw,
   Sliders,
   ShieldCheck,
+  LogIn,
 } from "lucide-react";
 import {
   MemoryItem,
@@ -24,6 +27,7 @@ import {
   getMemorySettings,
   updateMemorySettings,
 } from "@/services/memory";
+import { getToken } from "@/services/auth";
 
 interface MemoryModalProps {
   isOpen: boolean;
@@ -32,10 +36,12 @@ interface MemoryModalProps {
 }
 
 export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: MemoryModalProps) {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [training, setTraining] = useState(false);
-  const [trainingMsg, setTrainingMsg] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ text: string; isError: boolean } | null>(null);
   const [learningEnabled, setLearningEnabled] = useState(true);
   const [newFact, setNewFact] = useState("");
   const [newCategory, setNewCategory] = useState("preference");
@@ -43,7 +49,15 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
 
   useEffect(() => {
     if (isOpen) {
-      loadData();
+      const token = getToken();
+      setIsAuthenticated(Boolean(token));
+      setFeedback(null);
+      if (token) {
+        loadData();
+      } else {
+        setMemories([]);
+        setLearningEnabled(false);
+      }
     }
   }, [isOpen]);
 
@@ -54,29 +68,53 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
       setMemories(list);
       setLearningEnabled(settings.learning_enabled);
       if (onMemoriesUpdated) onMemoriesUpdated(list.length);
+    } catch (err) {
+      console.warn("Could not load memories:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleToggleLearning = async () => {
+    if (!isAuthenticated) {
+      setFeedback({
+        text: "Please sign in or register to enable continuous AI learning.",
+        isError: true,
+      });
+      return;
+    }
     const nextState = !learningEnabled;
     setLearningEnabled(nextState);
     await updateMemorySettings(nextState);
   };
 
   const handleTrainOnHistory = async () => {
+    if (!isAuthenticated) {
+      setFeedback({
+        text: "Please sign in or create an account to train Yash.AI on your chat history.",
+        isError: true,
+      });
+      return;
+    }
+
     setTraining(true);
-    setTrainingMsg(null);
+    setFeedback(null);
     try {
       const res = await trainOnHistory();
       if (res) {
         setMemories(res.memories);
-        setTrainingMsg(`✨ Trained AI! Extracted and organized ${res.extracted_count} memories from your history.`);
+        setFeedback({
+          text: `✨ Trained AI! Extracted and organized ${res.extracted_count} memories from your history.`,
+          isError: false,
+        });
         if (onMemoriesUpdated) onMemoriesUpdated(res.memories.length);
       }
-    } catch (e) {
-      setTrainingMsg("Failed to train on history. Please check connection.");
+    } catch (e: any) {
+      const isAuthErr = e?.response?.status === 401;
+      const msg = isAuthErr
+        ? "Session expired or authentication required. Please sign in again."
+        : e?.response?.data?.detail || e?.message || "Failed to train on history.";
+      setFeedback({ text: msg, isError: true });
     } finally {
       setTraining(false);
     }
@@ -86,14 +124,25 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
     e.preventDefault();
     if (!newFact.trim()) return;
 
+    if (!isAuthenticated) {
+      setFeedback({
+        text: "Please sign in or create an account to store custom AI memories.",
+        isError: true,
+      });
+      return;
+    }
+
     setSavingNew(true);
     try {
       const created = await addMemory(newFact, newCategory);
       if (created) {
         setMemories((prev) => [created, ...prev]);
         setNewFact("");
+        setFeedback({ text: "Memory successfully saved!", isError: false });
         if (onMemoriesUpdated) onMemoriesUpdated(memories.length + 1);
       }
+    } catch (e: any) {
+      setFeedback({ text: "Failed to save memory. Please try again.", isError: true });
     } finally {
       setSavingNew(false);
     }
@@ -147,9 +196,11 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <span>AI Memory & Personal Training</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
-                  {memories.length} Active
-                </span>
+                {isAuthenticated && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
+                    {memories.length} Active
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-zinc-400">
                 Yash.AI learns your preferences & habits to craft customized answers.
@@ -163,6 +214,30 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Guest Mode Callout */}
+        {!isAuthenticated && (
+          <div className="mx-6 mt-4 p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <LogIn className="w-4 h-4 text-blue-400 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-white">Sign In to Enable AI Memory</p>
+                <p className="text-[11px] text-zinc-400">
+                  Continuous learning and chat history analysis are stored with your account.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                onClose();
+                router.push("/login");
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all cursor-pointer whitespace-nowrap"
+            >
+              Sign In / Register
+            </button>
+          </div>
+        )}
 
         {/* Action & Training Bar */}
         <div className="p-6 border-b border-zinc-800/80 bg-gradient-to-r from-blue-950/20 via-zinc-900/40 to-indigo-950/20 space-y-4">
@@ -212,10 +287,20 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
             </button>
           </div>
 
-          {trainingMsg && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2 animate-fadeIn">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{trainingMsg}</span>
+          {feedback && (
+            <div
+              className={`p-3 rounded-xl text-xs flex items-center gap-2 animate-fadeIn ${
+                feedback.isError
+                  ? "bg-red-500/10 border border-red-500/25 text-red-300"
+                  : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-300"
+              }`}
+            >
+              {feedback.isError ? (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              )}
+              <span>{feedback.text}</span>
             </div>
           )}
         </div>
@@ -263,17 +348,34 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
               <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mx-auto mb-3">
                 <Brain className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-300">No Memories Extracted Yet</h3>
+              <h3 className="text-sm font-semibold text-zinc-300">
+                {!isAuthenticated ? "Sign in to see learned memories" : "No Memories Extracted Yet"}
+              </h3>
               <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1 mb-4">
-                Click <strong>"Train AI on Chat History"</strong> above to extract facts from past conversations, or add custom instructions.
+                {!isAuthenticated
+                  ? "Your personal preferences and learned habits are kept secure in your account."
+                  : "Click \"Train AI on Chat History\" above to extract facts from past conversations, or add custom instructions."}
               </p>
-              <button
-                onClick={handleTrainOnHistory}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-300" />
-                <span>Train on History Now</span>
-              </button>
+              {!isAuthenticated ? (
+                <button
+                  onClick={() => {
+                    onClose();
+                    router.push("/login");
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In to Enable</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleTrainOnHistory}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Train on History Now</span>
+                </button>
+              )}
             </div>
           ) : (
             <>

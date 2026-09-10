@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, ArrowRight, AlertCircle } from "lucide-react";
+import { Sparkles, ArrowRight, AlertCircle, Zap, UserCheck } from "lucide-react";
 import { login } from "@/services/auth";
 
 export default function LoginPage() {
@@ -30,6 +30,22 @@ export default function LoginPage() {
     }
   };
 
+  const handleDemoLogin = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      setEmail("demo@yash.ai");
+      setPassword("demo1234");
+      await login("demo@yash.ai", "demo1234");
+      router.push("/chat");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.detail || "Failed to sign in with demo user.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-8 shadow-2xl shadow-blue-500/5">
@@ -50,6 +66,39 @@ export default function LoginPage() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Quick Demo Sign-In */}
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          disabled={loading}
+          className="w-full mb-6 p-3 rounded-2xl bg-gradient-to-r from-blue-950/60 via-indigo-950/40 to-purple-950/60 border border-blue-500/30 hover:border-blue-400/50 text-white text-xs font-semibold flex items-center justify-between transition-all cursor-pointer group disabled:opacity-50"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-600/30 flex items-center justify-center text-blue-400">
+              <Zap className="w-3.5 h-3.5 text-amber-300" />
+            </div>
+            <div className="text-left">
+              <span className="block font-bold text-zinc-100 group-hover:text-blue-300 transition-colors">
+                One-Click Demo Account
+              </span>
+              <span className="text-[10px] text-zinc-400 font-normal">
+                Includes chat history & personalized memory
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
+            Instant Login
+          </span>
+        </button>
+
+        <div className="relative flex py-2 items-center mb-4">
+          <div className="flex-grow border-t border-zinc-800"></div>
+          <span className="flex-shrink mx-4 text-[10px] text-zinc-500 uppercase tracking-widest">
+            or sign in with email
+          </span>
+          <div className="flex-grow border-t border-zinc-800"></div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -83,18 +132,23 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 mt-6 bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all text-sm disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 mt-6 bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all text-sm disabled:opacity-50 cursor-pointer"
           >
             <span>{loading ? "Signing in..." : "Sign In"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-zinc-500">
-          Don't have an account?{" "}
-          <Link href="/register" className="text-blue-400 hover:underline font-semibold">
-            Create one
+        <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-500">
+          <Link href="/chat" className="text-zinc-400 hover:text-white transition-colors">
+            ← Continue as Guest
           </Link>
+          <div>
+            Don't have an account?{" "}
+            <Link href="/register" className="text-blue-400 hover:underline font-semibold">
+              Create one
+            </Link>
+          </div>
         </div>
       </div>
     </div>

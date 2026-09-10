@@ -26,13 +26,18 @@ router = APIRouter(
 BASE_SYSTEM_INSTRUCTION = """You are **Yash.AI**, an advanced, articulate, and intelligent AI personal assistant and pair programmer.
 Your goal is to provide exceptionally clear, thoughtful, accurate, and structured answers tailored to the user's needs.
 
-### Guidelines for High-Quality Responses:
-1. **Clarity & Structure**: Organize complex answers with clear markdown headers (`###`), bullet points, and concise explanations.
-2. **Code Excellence**:
-   - Always write clean, production-grade code in properly tagged fenced code blocks (e.g. ````python`, ````typescript`, ````sql`).
-   - Include helpful inline comments and avoid redundant boilerplate.
-3. **Adaptive Tone**: Maintain a professional, encouraging, and collaborative tone. Be concise when asked direct questions and detailed when asked for comprehensive explanations.
-4. **Context & Continuity**: Seamlessly incorporate past context and user preferences to provide deeply personalized responses."""
+### Output Formatting & Style Guidelines:
+1. **Direct & Uncompromising**:
+   - Never begin responses with polite conversational filler or preambles (e.g. do NOT say "Sure!", "Certainly!", "Here are the updates", "I'd be happy to help", or "Below is the information").
+   - Jump directly into the substantive content immediately.
+2. **Scannable & Structured**:
+   - Use bold topic lead-ins for key points, news, and summaries (e.g. `**Topic / Event Headline:** Detailed explanation...`).
+   - Group information into clean, logical sections using markdown headers (`### Topic`) and bulleted lists.
+   - Separate distinct ideas with clean paragraph breaks so the text is comfortable to read.
+3. **Code Excellence**:
+   - Always write clean, production-grade code in properly tagged fenced code blocks (e.g. ```python, ```typescript, ```sql).
+   - Avoid redundant boilerplate and include concise inline comments.
+4. **Context & Continuity**: Seamlessly incorporate past context and learned preferences to provide deeply personalized responses."""
 
 
 @router.post("", response_model=ChatResponse)
@@ -70,7 +75,8 @@ async def chat(
         title_summary = (request.message[:30] + "...") if len(request.message) > 30 else request.message
         doc = new_conversation(
             user_id=current_user["_id"],
-            title=title_summary or "New Chat"
+            title=title_summary or "New Chat",
+            project_id=request.project_id
         )
         await db["conversations"].insert_one(doc)
         conversation = doc
@@ -203,7 +209,11 @@ async def chat_stream(
                 history.append({"role": m["role"], "content": m["content"]})
     elif current_user:
         title_summary = (request.message[:30] + "...") if len(request.message) > 30 else request.message
-        doc = new_conversation(user_id=current_user["_id"], title=title_summary or "New Chat")
+        doc = new_conversation(
+            user_id=current_user["_id"],
+            title=title_summary or "New Chat",
+            project_id=request.project_id
+        )
         await db["conversations"].insert_one(doc)
         conversation = doc
 

@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { getToken } from "@/services/auth";
 
 export interface MemoryItem {
   id: string;
@@ -11,6 +12,8 @@ export interface MemoryItem {
 export interface MemorySettings {
   learning_enabled: boolean;
   total_memories: number;
+  has_trained?: boolean;
+  last_trained_at?: string | null;
 }
 
 export interface TrainHistoryResponse {
@@ -20,6 +23,8 @@ export interface TrainHistoryResponse {
 }
 
 export async function fetchMemories(): Promise<MemoryItem[]> {
+  const token = getToken();
+  if (!token) return [];
   try {
     const response = await api.get<MemoryItem[]>("/memory/");
     return response.data;
@@ -30,6 +35,8 @@ export async function fetchMemories(): Promise<MemoryItem[]> {
 }
 
 export async function addMemory(fact: string, category = "custom"): Promise<MemoryItem | null> {
+  const token = getToken();
+  if (!token) return null;
   try {
     const response = await api.post<MemoryItem>("/memory/", { fact, category });
     return response.data;
@@ -40,16 +47,17 @@ export async function addMemory(fact: string, category = "custom"): Promise<Memo
 }
 
 export async function trainOnHistory(): Promise<TrainHistoryResponse | null> {
-  try {
-    const response = await api.post<TrainHistoryResponse>("/memory/train");
-    return response.data;
-  } catch (error) {
-    console.error("Error training AI on history:", error);
-    return null;
+  const token = getToken();
+  if (!token) {
+    throw new Error("Authentication required: Please sign in to train Yash.AI on your chat history.");
   }
+  const response = await api.post<TrainHistoryResponse>("/memory/train");
+  return response.data;
 }
 
 export async function deleteMemory(id: string): Promise<boolean> {
+  const token = getToken();
+  if (!token) return false;
   try {
     await api.delete(`/memory/${id}`);
     return true;
@@ -60,6 +68,8 @@ export async function deleteMemory(id: string): Promise<boolean> {
 }
 
 export async function clearAllMemories(): Promise<boolean> {
+  const token = getToken();
+  if (!token) return false;
   try {
     await api.delete("/memory/clear/all");
     return true;
@@ -70,6 +80,10 @@ export async function clearAllMemories(): Promise<boolean> {
 }
 
 export async function getMemorySettings(): Promise<MemorySettings> {
+  const token = getToken();
+  if (!token) {
+    return { learning_enabled: false, total_memories: 0 };
+  }
   try {
     const response = await api.get<MemorySettings>("/memory/settings");
     return response.data;
@@ -79,6 +93,8 @@ export async function getMemorySettings(): Promise<MemorySettings> {
 }
 
 export async function updateMemorySettings(learningEnabled: boolean): Promise<MemorySettings | null> {
+  const token = getToken();
+  if (!token) return null;
   try {
     const response = await api.put<MemorySettings>("/memory/settings", {
       learning_enabled: learningEnabled,

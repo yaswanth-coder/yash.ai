@@ -55,7 +55,7 @@ export default function ImageStudioPage() {
 
   const getToken = () => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("access_token") || "";
+      return localStorage.getItem("yash_ai_token") || localStorage.getItem("access_token") || "";
     }
     return "";
   };

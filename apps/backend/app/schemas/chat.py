@@ -10,6 +10,7 @@ class ChatRequest(BaseModel):
     local_only: bool = False
     web_search: bool = True
     persona_id: Optional[str] = None
+    project_id: Optional[str] = None
 
 
 class ChatResponse(BaseModel):

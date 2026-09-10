@@ -20,6 +20,10 @@ import {
   Cpu,
   Monitor,
   Image as ImageIcon,
+  Brain,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
 } from "lucide-react";
 import { submitMessageFeedback } from "@/services/feedback";
 import dynamic from "next/dynamic";
@@ -64,8 +68,40 @@ export default function ChatMessage({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [canvasCode, setCanvasCode] = useState<{ code: string; lang: string } | null>(null);
+  const [useSerif, setUseSerif] = useState(true);
+  const [showThinking, setShowThinking] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("yash_ai_font");
+      if (saved) {
+        setUseSerif(saved === "serif");
+      }
+    }
+  }, []);
+
+  const toggleFont = () => {
+    const next = !useSerif;
+    setUseSerif(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("yash_ai_font", next ? "serif" : "sans");
+    }
+  };
 
   const isUser = role === "user";
+
+  // Parse out reasoning and thinking blocks (<think>...</think>)
+  let thinkingContent: string | null = null;
+  let displayContent = content;
+
+  const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/i);
+  if (thinkMatch) {
+    thinkingContent = thinkMatch[1].trim();
+    displayContent = content.replace(/<think>[\s\S]*?<\/think>/i, "").trim();
+  } else if (content.startsWith("<think>")) {
+    thinkingContent = content.replace("<think>", "").trim();
+    displayContent = "";
+  }
 
   const handleCopyMessage = () => {
     navigator.clipboard.writeText(content);
@@ -116,22 +152,40 @@ export default function ChatMessage({
         <div className={`flex items-start gap-3 max-w-3xl w-full ${isUser ? "flex-row-reverse" : "flex-row"}`}>
           {/* Avatar */}
           <div
-            className={`w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md ${
-              isUser
-                ? "bg-blue-600 shadow-blue-600/20"
-                : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 shadow-blue-500/20"
-            }`}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 relative overflow-hidden"
+            style={isUser ? {
+              background: "linear-gradient(135deg, rgba(59,130,246,0.90), rgba(79,70,229,0.85))",
+              boxShadow: "0 4px 12px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.20)",
+              border: "1px solid rgba(147,197,253,0.25)",
+            } : {
+              background: "linear-gradient(135deg, rgba(59,130,246,0.85), rgba(124,92,252,0.80), rgba(20,184,166,0.65))",
+              boxShadow: "0 4px 16px rgba(79,140,255,0.35), inset 0 1px 0 rgba(255,255,255,0.22)",
+              border: "1px solid rgba(255,255,255,0.18)",
+            }}
           >
             {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+            {/* specular highlight on avatar */}
+            <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-xl pointer-events-none" />
           </div>
 
-          {/* Message Container */}
+          {/* Message Container — liquid glass for AI, solid for user */}
           <div
-            className={`relative group rounded-2xl px-5 py-4 shadow-sm border text-sm leading-relaxed ${
+            className={`relative group rounded-2xl px-5 py-4 shadow-xs text-sm leading-relaxed transition-all ${
               isUser
-                ? "bg-blue-600 text-white border-blue-500/30 rounded-tr-xs"
-                : "bg-zinc-900/90 text-zinc-100 border-zinc-800/90 rounded-tl-xs backdrop-blur-xs flex-1"
+                ? "text-white rounded-tr-xs"
+                : "text-zinc-100 rounded-tl-xs flex-1"
             }`}
+            style={isUser ? {
+              background: "linear-gradient(135deg, rgba(59,130,246,0.85), rgba(79,70,229,0.80))",
+              border: "1px solid rgba(147,197,253,0.25)",
+              boxShadow: "0 4px 20px rgba(59,130,246,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+            } : {
+              background: "rgba(255,255,255,0.03)",
+              backdropFilter: "blur(20px) saturate(160%)",
+              WebkitBackdropFilter: "blur(20px) saturate(160%)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+            }}
           >
             {/* File Attachment Badge */}
             {filePath && (
@@ -192,23 +246,147 @@ export default function ChatMessage({
                   </div>
                 </form>
               ) : (
-                <div className="whitespace-pre-wrap font-sans">{content}</div>
+                <div className="whitespace-pre-wrap font-sans text-white leading-relaxed">{content}</div>
               )
             ) : (
-              <div className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-headings:text-zinc-100 prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-400 prose-code:text-blue-300">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
+              <div
+                className={`${
+                  useSerif ? "font-serif text-[15.5px] sm:text-[16px] leading-[1.78]" : "font-sans text-sm sm:text-[14.5px] leading-relaxed"
+                } text-zinc-200 tracking-normal selection:bg-blue-500/30 selection:text-white`}
+              >
+                {/* Collapsible Chain-of-Thought / Deep Reasoning Block */}
+                {thinkingContent && (
+                  <div className="mb-4 rounded-xl overflow-hidden border border-violet-500/20 bg-violet-950/20 backdrop-blur-md animate-fadeIn">
+                    <button
+                      type="button"
+                      onClick={() => setShowThinking(!showThinking)}
+                      className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs text-violet-300 hover:bg-white/[0.03] transition-colors select-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Brain className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
+                        <span className="font-semibold tracking-wide text-zinc-200">Thought Process</span>
+                        <span className="px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/25 text-[10px] text-violet-300">
+                          Deep Reasoning
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-400 text-[11px]">
+                        <span>{showThinking ? "Hide thoughts" : "View reasoning"}</span>
+                        {showThinking ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                    </button>
+                    {showThinking && (
+                      <div className="px-3.5 py-2.5 border-t border-violet-500/15 text-xs text-zinc-400 font-mono leading-relaxed max-h-64 overflow-y-auto whitespace-pre-wrap custom-scrollbar bg-black/20">
+                        {thinkingContent}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!displayContent && !thinkingContent ? (
+                  <div className="py-2 flex items-center gap-3 text-zinc-300 animate-fadeIn">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: "4s" }} />
+                      <span className="text-xs font-semibold text-zinc-200 tracking-wide">Thinking...</span>
+                      <div className="flex items-center gap-1 ml-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" />
+                      </div>
+                    </div>
+                    <span className="text-xs text-zinc-400 font-mono text-[11px] animate-pulse hidden sm:inline">
+                      Formulating response...
+                    </span>
+                  </div>
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                   components={{
-                    // Use div instead of p to prevent invalid nesting when CodeBlock
-                    // (which renders a div/pre) appears inside a paragraph
+                    h1({ children }: any) {
+                      return (
+                        <h1 className="text-xl sm:text-2xl font-bold text-white mt-6 mb-3 tracking-tight font-serif">
+                          {children}
+                        </h1>
+                      );
+                    },
+                    h2({ children }: any) {
+                      return (
+                        <h2 className="text-lg sm:text-xl font-bold text-white mt-5 mb-2.5 tracking-tight font-serif">
+                          {children}
+                        </h2>
+                      );
+                    },
+                    h3({ children }: any) {
+                      return (
+                        <h3 className="text-base sm:text-lg font-semibold text-zinc-100 mt-4 mb-2 tracking-tight font-serif">
+                          {children}
+                        </h3>
+                      );
+                    },
                     p({ children, ...props }: any) {
                       return (
-                        <div className="mb-3 last:mb-0 leading-relaxed" {...props}>
+                        <div className="mb-4 last:mb-0 leading-[1.78]" {...props}>
                           {children}
                         </div>
                       );
                     },
-                    // Pass pre through — CodeBlock renders its own pre
+                    strong({ children }: any) {
+                      return (
+                        <strong className="font-bold text-white tracking-wide">
+                          {children}
+                        </strong>
+                      );
+                    },
+                    ul({ children }: any) {
+                      return (
+                        <ul className="list-disc pl-5 my-3.5 space-y-2 text-zinc-200">
+                          {children}
+                        </ul>
+                      );
+                    },
+                    ol({ children }: any) {
+                      return (
+                        <ol className="list-decimal pl-5 my-3.5 space-y-2 text-zinc-200">
+                          {children}
+                        </ol>
+                      );
+                    },
+                    li({ children }: any) {
+                      return <li className="leading-[1.75] pl-1">{children}</li>;
+                    },
+                    blockquote({ children }: any) {
+                      return (
+                        <blockquote className="border-l-2 border-blue-500/50 bg-blue-500/5 pl-4 py-1.5 my-4 italic text-zinc-300 rounded-r-xl">
+                          {children}
+                        </blockquote>
+                      );
+                    },
+                    hr() {
+                      return <hr className="border-zinc-800/80 my-5" />;
+                    },
+                    table({ children }: any) {
+                      return (
+                        <div className="overflow-x-auto my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 shadow-inner">
+                          <table className="w-full text-xs text-left font-sans">{children}</table>
+                        </div>
+                      );
+                    },
+                    th({ children }: any) {
+                      return (
+                        <th className="px-3.5 py-2.5 bg-zinc-900/90 font-semibold text-zinc-200 border-b border-zinc-800">
+                          {children}
+                        </th>
+                      );
+                    },
+                    td({ children }: any) {
+                      return (
+                        <td className="px-3.5 py-2.5 border-b border-zinc-800/60 text-zinc-300 font-mono text-[11px]">
+                          {children}
+                        </td>
+                      );
+                    },
                     pre({ children }: any) {
                       return <>{children}</>;
                     },
@@ -237,8 +415,9 @@ export default function ChatMessage({
                     },
                   }}
                 >
-                  {content}
-                </ReactMarkdown>
+                  {displayContent || (thinkingContent ? "*(Reasoning completed)*" : "")}
+                  </ReactMarkdown>
+                )}
 
                 {/* Generated Visual Charts & Figures */}
                 {!isUser && chartImages && chartImages.length > 0 && (
@@ -264,17 +443,15 @@ export default function ChatMessage({
             )}
 
             {/* Footer Actions & Metadata */}
-            <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-800/60 text-[11px] text-zinc-400">
+            <div
+              className="flex items-center justify-between mt-3 pt-2 text-[11px] text-zinc-400"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+            >
               <div className="flex items-center gap-2">
                 {createdAt && (
                   <span>{new Date(createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                 )}
-                {provider && (
-                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-zinc-500">
-                    <Cpu className="w-2.5 h-2.5" />
-                    <span>{provider}</span>
-                  </span>
-                )}
+
               </div>
 
               <div className="flex items-center gap-1.5">
@@ -338,6 +515,17 @@ export default function ChatMessage({
                   </>
                 )}
 
+                {/* Font Switcher (Editorial Serif vs Modern Sans) */}
+                {!isUser && (
+                  <button
+                    onClick={toggleFont}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/40 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[10px] font-medium transition-colors border border-zinc-800/80 cursor-pointer"
+                    title={useSerif ? "Switch to Modern Sans font" : "Switch to Editorial Serif font"}
+                  >
+                    <span>{useSerif ? "Serif" : "Sans"}</span>
+                  </button>
+                )}
+
                 {/* Copy Message */}
                 <button
                   onClick={handleCopyMessage}
@@ -392,8 +580,23 @@ function CodeBlock({
   };
 
   return (
-    <div className="my-4 rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 shadow-lg">
-      <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/90 border-b border-zinc-800 text-xs text-zinc-400 font-mono">
+    <div className="my-4 rounded-xl overflow-hidden border shadow-lg"
+      style={{
+        background: "rgba(8, 8, 18, 0.80)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
+    >
+      {/* Code block header */}
+      <div
+        className="flex items-center justify-between px-4 py-2 text-xs text-zinc-400 font-mono"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500/60 inline-block" />

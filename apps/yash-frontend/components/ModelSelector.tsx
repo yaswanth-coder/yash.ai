@@ -10,37 +10,51 @@ interface ModelSelectorProps {
   localOnly?: boolean;
 }
 
+// Valid static fallback models with correct provider-prefixed IDs
+const STATIC_MODELS: ModelItem[] = [
+  { id: "auto", name: "Auto (Best Available)", description: "Intelligent automatic provider routing & failover" },
+  { id: "gemini", name: "Gemini Flash", description: "Fast flagship multimodal AI — default" },
+  { id: "groq:llama-3.3-70b-versatile", name: "Groq — Llama 3.3 70B", description: "Ultra-fast LPU inference" },
+  { id: "anthropic:claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", description: "Advanced reasoning & coding" },
+  { id: "openai:gpt-4o", name: "OpenAI GPT-4o", description: "State-of-the-art multimodal intelligence" },
+  { id: "ollama:llama3", name: "Ollama — Llama 3 (Local)", is_local: true, description: "Runs 100% locally on your machine" },
+];
+
 export default function ModelSelector({
   selectedModel,
   onSelectModel,
   localOnly = false,
 }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [models, setModels] = useState<ModelItem[]>([
-    { id: "auto", name: "Auto (Best Available)", description: "Intelligent automatic provider routing & failover" },
-    { id: "gemini", name: "Gemini 3.6 Flash", description: "Flagship high-speed multimodal AI" },
-    { id: "ollama:llama3", name: "Ollama (Local Llama 3)", is_local: true, description: "Runs 100% locally on your machine" },
-    { id: "groq:llama-3.3-70b-versatile", name: "Groq (Llama 3.3 70B)", description: "Ultra-fast LPU inference" },
-    { id: "anthropic:claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", description: "Advanced reasoning & coding" },
-    { id: "openai:gpt-4o", name: "OpenAI GPT-4o", description: "State-of-the-art multimodal intelligence" },
-  ]);
-
+  const [models, setModels] = useState<ModelItem[]>(STATIC_MODELS);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function load() {
-      const list = await fetchModels();
-      if (list && list.length > 0) {
-        // Prepend Auto option if not present
-        const hasAuto = list.some((m) => m.id === "auto");
-        if (!hasAuto) {
+      try {
+        const list = await fetchModels();
+        if (list && list.length > 0) {
+          // Only include models with valid provider-prefixed IDs or known bare names
+          const validModels = list.filter((m) => {
+            const id = m.id.toLowerCase();
+            return (
+              id === "auto" ||
+              id === "gemini" ||
+              id.startsWith("gemini:") ||
+              id.startsWith("anthropic:") ||
+              id.startsWith("groq:") ||
+              id.startsWith("ollama:") ||
+              id.startsWith("openai:")
+            );
+          });
+          const hasAuto = validModels.some((m) => m.id === "auto");
           setModels([
-            { id: "auto", name: "Auto (Best Available)", description: "Intelligent automatic routing & failover" },
-            ...list,
+            ...(hasAuto ? [] : [STATIC_MODELS[0]]),
+            ...validModels,
           ]);
-        } else {
-          setModels(list);
         }
+      } catch {
+        // Use static fallback silently
       }
     }
     load();
@@ -61,34 +75,45 @@ export default function ModelSelector({
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {/* Trigger button — liquid glass */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/90 text-xs font-semibold text-zinc-200 transition-all shadow-xs"
+        className="glass-btn flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-200 transition-all"
       >
         {localOnly ? (
           <Shield className="w-3.5 h-3.5 text-emerald-400" />
-        ) : activeModelObj.is_local ? (
-          <Cpu className="w-3.5 h-3.5 text-purple-400" />
-        ) : activeModelObj.id === "auto" ? (
+        ) : activeModelObj?.is_local ? (
+          <Cpu className="w-3.5 h-3.5 text-violet-400" />
+        ) : activeModelObj?.id === "auto" ? (
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
         ) : (
           <Zap className="w-3.5 h-3.5 text-amber-400" />
         )}
-
         <span className="truncate max-w-[140px] sm:max-w-[180px]">
-          {localOnly ? "Local Only (Ollama)" : activeModelObj.name}
+          {localOnly ? "Local Only (Ollama)" : activeModelObj?.name}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
+      {/* Dropdown — liquid glass */}
       {isOpen && (
-        <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-72 sm:w-80 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl z-50 p-2 space-y-1 animate-fadeIn">
-          <div className="px-3 py-2 border-b border-zinc-800/80 mb-1">
+        <div
+          className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-72 sm:w-80 rounded-2xl z-50 p-2 space-y-0.5 animate-glass-slide-down"
+          style={{
+            background: "rgba(8, 8, 20, 0.92)",
+            backdropFilter: "blur(32px) saturate(200%)",
+            WebkitBackdropFilter: "blur(32px) saturate(200%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.70), 0 4px 16px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.07)",
+          }}
+        >
+          {/* Header */}
+          <div className="px-3 py-2 mb-1" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Select AI Engine</p>
-            <p className="text-[10px] text-zinc-500">Auto mode selects the best model with automatic failover.</p>
+            <p className="text-[10px] text-zinc-600 mt-0.5">Auto mode selects best model with automatic failover.</p>
           </div>
 
-          <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-1">
+          <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-0.5">
             {models.map((model) => {
               const isSelected = selectedModel === model.id;
               return (
@@ -98,22 +123,46 @@ export default function ModelSelector({
                     onSelectModel(model.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-start justify-between gap-2 p-2.5 rounded-xl text-left transition-all ${
-                    isSelected
-                      ? "bg-blue-600/15 border border-blue-500/30 text-white"
-                      : "hover:bg-zinc-900 text-zinc-300 border border-transparent"
-                  }`}
+                  className="w-full flex items-start justify-between gap-2 p-2.5 rounded-xl text-left transition-all"
+                  style={isSelected ? {
+                    background: "rgba(59,130,246,0.12)",
+                    border: "1px solid rgba(59,130,246,0.25)",
+                    color: "white",
+                  } : {
+                    border: "1px solid transparent",
+                    color: "rgba(212,212,216,1)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) e.currentTarget.style.background = "transparent";
+                  }}
                 >
                   <div className="space-y-0.5 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold">{model.name}</span>
                       {model.is_local && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                        <span
+                          className="text-[9px] px-1.5 rounded font-bold"
+                          style={{
+                            background: "rgba(124,92,252,0.20)",
+                            border: "1px solid rgba(124,92,252,0.30)",
+                            color: "rgba(196,181,253,1)",
+                          }}
+                        >
                           LOCAL
                         </span>
                       )}
                       {model.id === "auto" && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
+                        <span
+                          className="text-[9px] px-1.5 rounded font-bold"
+                          style={{
+                            background: "rgba(59,130,246,0.20)",
+                            border: "1px solid rgba(59,130,246,0.30)",
+                            color: "rgba(147,197,253,1)",
+                          }}
+                        >
                           AUTO
                         </span>
                       )}

@@ -1,19 +1,157 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { X, Mic, MicOff, Sparkles, Volume2 } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { X, Mic, MicOff, Sparkles, Volume2, VolumeX, Globe } from "lucide-react";
+import { streamMessage, StreamEvent } from "@/services/chat";
 
 interface VoiceModeModalProps {
   onClose: () => void;
-  onTranscript: (text: string) => void;
+  onTranscript?: (text: string) => void;
 }
 
 type VoiceState = "idle" | "listening" | "processing" | "speaking";
+type LanguageMode = "auto" | "te-IN" | "en-US" | "hi-IN";
+type ConcreteLang = "te-IN" | "en-US" | "hi-IN";
+
+interface LangOption {
+  id: LanguageMode;
+  label: string;
+  flag: string;
+  recogLang: string;
+  ttsLang: string;
+  greeting: string;
+  systemPrompt: string;
+}
+
+const LANG_OPTIONS: Record<LanguageMode, LangOption> = {
+  auto: {
+    id: "auto",
+    label: "Auto Detect",
+    flag: "⚡",
+    recogLang: "en-IN",
+    ttsLang: "en-US",
+    greeting: "Hello! I'm Yash.AI. Speak in English, Telugu, or Hindi — I will automatically reply in your language!",
+    systemPrompt:
+      "You are Yash.AI in real-time Voice Mode. AUTO-DETECT the language and dialect the user is speaking (e.g. Telugu, English, Hindi, Telugish, Hinglish). Respond fluently, warmly, and naturally in the EXACT SAME LANGUAGE and DIALECT. Keep your reply concise in 1-3 spoken sentences. Avoid markdown, bullet points, asterisks, or code blocks.",
+  },
+  "te-IN": {
+    id: "te-IN",
+    label: "తెలుగు",
+    flag: "🇮🇳",
+    recogLang: "te-IN",
+    ttsLang: "te-IN",
+    greeting: "నమస్కారం! నేను Yash.AI. మీకు ఎలా సహాయం చేయగలను?",
+    systemPrompt:
+      "You are Yash.AI in Voice Mode. Respond strictly and fluently in spoken Telugu (తెలుగు) in a natural, polite, conversational tone in 1-3 short spoken sentences. Avoid markdown, bullet points, asterisks, or English words unless necessary.",
+  },
+  "en-US": {
+    id: "en-US",
+    label: "English",
+    flag: "🇺🇸",
+    recogLang: "en-US",
+    ttsLang: "en-US",
+    greeting: "Hello! I'm Yash.AI. How can I help you today?",
+    systemPrompt:
+      "You are Yash.AI in Voice Mode. Speak like a real, friendly human in 1-3 natural, concise spoken sentences. Avoid markdown, bullet points, asterisks, or code blocks.",
+  },
+  "hi-IN": {
+    id: "hi-IN",
+    label: "हिंदी",
+    flag: "🇮🇳",
+    recogLang: "hi-IN",
+    ttsLang: "hi-IN",
+    greeting: "नमस्ते! मैं Yash.AI हूँ। मैं आपकी क्या मदद कर सकता हूँ?",
+    systemPrompt:
+      "You are Yash.AI in Voice Mode. Respond fluently and politely in spoken Hindi (हिंदी) in a natural conversational tone in 1-3 short spoken sentences. Avoid markdown, bullet points, asterisks, or English words unless necessary.",
+  },
+};
+
+// Detect language of text (Script-based + phonetic heuristics)
+function detectLanguageFromText(text: string): ConcreteLang {
+  // 1. Check Unicode script ranges
+  if (/[\u0C00-\u0C7F]/.test(text)) return "te-IN"; // Telugu script
+  if (/[\u0900-\u097F]/.test(text)) return "hi-IN"; // Devanagari script
+
+  // 2. Common romanized Telugu keywords (Telugish)
+  const teluguPatterns =
+    /\b(namaskaram|namaste|bagunnara|bagunnanu|ela\s*unnav|ela\s*unnaru|em\s*chesthunnav|cheppandi|cheppu|meeru|nenu|kavali|leka|eppudu|ekkada|avunu|ledu|chala|dhanyavadalu|enti|emiti|ra|andi|babu|anniya|akka)\b/i;
+  if (teluguPatterns.test(text)) return "te-IN";
+
+  // 3. Common romanized Hindi keywords (Hinglish)
+  const hindiPatterns =
+    /\b(namaste|kaise\s*ho|kya\s*hal|kya\s*hai|batao|dhanyawad|shukriya|aap|hum|theek\s*hai|bhai|kripya|bolo|samajh)\b/i;
+  if (hindiPatterns.test(text)) return "hi-IN";
+
+  return "en-US";
+}
+
+// Pick the best available TTS voice for a concrete language
+function pickVoice(lang: ConcreteLang): SpeechSynthesisVoice | null {
+  if (typeof window === "undefined") return null;
+  const voices = window.speechSynthesis.getVoices();
+
+  if (lang === "te-IN") {
+    // 1. Direct Telugu language or voice name
+    const teluguVoice = voices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith("te") ||
+        v.lang.toLowerCase().includes("te-in") ||
+        v.name.toLowerCase().includes("telugu") ||
+        v.name.toLowerCase().includes("mohan") ||
+        v.name.toLowerCase().includes("shruti")
+    );
+    if (teluguVoice) return teluguVoice;
+
+    // 2. Fallback to Indian voice (Indian English/Hindi) for accurate phonetics
+    const indianVoice = voices.find(
+      (v) =>
+        v.lang.toLowerCase().includes("in") ||
+        v.name.toLowerCase().includes("india") ||
+        v.name.toLowerCase().includes("hindi") ||
+        v.name.toLowerCase().includes("heera") ||
+        v.name.toLowerCase().includes("neerja") ||
+        v.name.toLowerCase().includes("swara")
+    );
+    if (indianVoice) return indianVoice;
+  } else if (lang === "hi-IN") {
+    const hindiVoice = voices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith("hi") ||
+        v.name.toLowerCase().includes("hindi") ||
+        v.name.toLowerCase().includes("swara") ||
+        v.name.toLowerCase().includes("madhur") ||
+        v.name.toLowerCase().includes("kalpana")
+    );
+    if (hindiVoice) return hindiVoice;
+
+    const indianVoice = voices.find(
+      (v) => v.lang.toLowerCase().includes("in") || v.name.toLowerCase().includes("india")
+    );
+    if (indianVoice) return indianVoice;
+  } else {
+    // English
+    const enVoices = voices.filter((v) => v.lang.toLowerCase().startsWith("en"));
+    const naturalKeywords = ["natural", "neural", "premium", "google", "jenny", "guy", "aria", "samantha", "karen"];
+    const naturalVoice = enVoices.find((v) =>
+      naturalKeywords.some((k) => v.name.toLowerCase().includes(k))
+    );
+    if (naturalVoice) return naturalVoice;
+    if (enVoices.length > 0) return enVoices[0];
+  }
+
+  return voices[0] || null;
+}
 
 export default function VoiceModeModal({ onClose, onTranscript }: VoiceModeModalProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [languageMode, setLanguageMode] = useState<LanguageMode>("auto");
+  const [detectedLang, setDetectedLang] = useState<ConcreteLang>("en-US");
   const [transcript, setTranscript] = useState("");
-  const [statusText, setStatusText] = useState("Tap or hold the glowing orb to speak");
+  const [aiReply, setAiReply] = useState("");
+  const [statusText, setStatusText] = useState("Tap the orb to start talking");
+  const [isMuted, setIsMuted] = useState(false);
+  const [conversationActive, setConversationActive] = useState(false);
+  const [voicesReady, setVoicesReady] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const recognitionRef = useRef<any>(null);
@@ -23,341 +161,715 @@ export default function VoiceModeModal({ onClose, onTranscript }: VoiceModeModal
   const micStreamRef = useRef<MediaStream | null>(null);
   const audioLevelRef = useRef<number>(0);
   const timeRef = useRef<number>(0);
-
-  // Particles for atmospheric animation
+  const historyRef = useRef<Array<{ role: string; content: string }>>([]);
+  const isSpeakingRef = useRef(false);
+  const shouldContinueRef = useRef(false);
+  const transcriptRef = useRef("");
   const particlesRef = useRef<Array<{ x: number; y: number; radius: number; speed: number; angle: number; dist: number }>>([]);
 
+  // Load voices
   useEffect(() => {
-    // Initialize 60 ambient orbital particles
-    particlesRef.current = Array.from({ length: 60 }).map(() => ({
+    const load = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v.length > 0) setVoicesReady(true);
+    };
+    load();
+    window.speechSynthesis.onvoiceschanged = load;
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  // Init visualizer particles
+  useEffect(() => {
+    particlesRef.current = Array.from({ length: 70 }).map(() => ({
       x: 0,
       y: 0,
-      radius: Math.random() * 2.5 + 0.8,
-      speed: (Math.random() * 0.02 + 0.008) * (Math.random() > 0.5 ? 1 : -1),
+      radius: Math.random() * 2.5 + 0.6,
+      speed: (Math.random() * 0.018 + 0.006) * (Math.random() > 0.5 ? 1 : -1),
       angle: Math.random() * Math.PI * 2,
-      dist: Math.random() * 120 + 40,
+      dist: Math.random() * 130 + 35,
     }));
   }, []);
 
-  // Canvas Animational Art Loop
+  // Canvas visualizer loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    let width = (canvas.width = 380);
-    let height = (canvas.height = 380);
-    const centerX = width / 2;
-    const centerY = height / 2;
+    canvas.width = 360;
+    canvas.height = 360;
+    const cx = 180,
+      cy = 180;
 
     const render = () => {
-      timeRef.current += 0.03;
+      timeRef.current += 0.025;
       const t = timeRef.current;
-      const currentLevel = audioLevelRef.current;
+      const lvl = audioLevelRef.current;
+      ctx.clearRect(0, 0, 360, 360);
 
-      ctx.clearRect(0, 0, width, height);
+      const base =
+        voiceState === "listening"
+          ? 60 + lvl * 50
+          : voiceState === "speaking"
+          ? 58 + Math.sin(t * 5) * 10 + lvl * 20
+          : voiceState === "processing"
+          ? 52 + Math.sin(t * 8) * 6
+          : 50;
 
-      // Base radius calculation reacting to voice input
-      const baseRadius = 55 + (voiceState === "listening" ? currentLevel * 45 : voiceState === "speaking" ? Math.sin(t * 4) * 8 + 65 : 55);
+      const [c1, c2, c3] =
+        voiceState === "listening"
+          ? ["rgba(6,182,212,0.9)", "rgba(59,130,246,0.9)", "rgba(168,85,247,0.9)"]
+          : voiceState === "processing"
+          ? ["rgba(236,72,153,0.9)", "rgba(168,85,247,0.9)", "rgba(99,102,241,0.9)"]
+          : voiceState === "speaking"
+          ? ["rgba(16,185,129,0.9)", "rgba(6,182,212,0.9)", "rgba(245,158,11,0.9)"]
+          : ["rgba(59,130,246,0.7)", "rgba(124,92,252,0.7)", "rgba(6,182,212,0.6)"];
 
-      // Dynamic color palettes
-      let color1 = "rgba(59, 130, 246, 0.8)";   // Blue
-      let color2 = "rgba(147, 51, 234, 0.8)";   // Purple
-      let color3 = "rgba(6, 182, 212, 0.8)";    // Cyan
-
-      if (voiceState === "listening") {
-        color1 = "rgba(6, 182, 212, 0.9)";     // Electric Cyan
-        color2 = "rgba(59, 130, 246, 0.9)";    // Royal Blue
-        color3 = "rgba(168, 85, 247, 0.9)";    // Neon Purple
-      } else if (voiceState === "processing") {
-        color1 = "rgba(236, 72, 153, 0.9)";    // Pink
-        color2 = "rgba(168, 85, 247, 0.9)";    // Purple
-        color3 = "rgba(99, 102, 241, 0.9)";    // Indigo
-      } else if (voiceState === "speaking") {
-        color1 = "rgba(16, 185, 129, 0.9)";    // Emerald
-        color2 = "rgba(6, 182, 212, 0.9)";     // Cyan
-        color3 = "rgba(245, 158, 11, 0.9)";    // Gold
-      }
-
-      // 1. Draw outer ambient aura glow
-      const auraGradient = ctx.createRadialGradient(
-        centerX, centerY, baseRadius * 0.4,
-        centerX, centerY, baseRadius * 2.2
-      );
-      auraGradient.addColorStop(0, color1);
-      auraGradient.addColorStop(0.5, color2);
-      auraGradient.addColorStop(1, "rgba(0,0,0,0)");
-
-      ctx.fillStyle = auraGradient;
+      // Outer aura
+      const aura = ctx.createRadialGradient(cx, cy, base * 0.3, cx, cy, base * 2.5);
+      aura.addColorStop(0, c1);
+      aura.addColorStop(0.5, c2);
+      aura.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = aura;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, baseRadius * 2.2, 0, Math.PI * 2);
+      ctx.arc(cx, cy, base * 2.5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.globalAlpha = 1;
 
-      // 2. Draw 3 Fluid Deforming Organic Blob Layers
-      const layers = [
-        { count: 6, offset: 0, scale: 1.0, alpha: 0.7, color: color1 },
-        { count: 7, offset: 2.1, scale: 1.15, alpha: 0.5, color: color2 },
-        { count: 5, offset: 4.2, scale: 0.85, alpha: 0.85, color: color3 },
-      ];
-
-      layers.forEach((layer) => {
+      // 3 fluid blob layers
+      [
+        { n: 6, off: 0, scale: 1.0, alpha: 0.75, color: c1 },
+        { n: 7, off: 2.1, scale: 1.18, alpha: 0.5, color: c2 },
+        { n: 5, off: 4.2, scale: 0.85, alpha: 0.88, color: c3 },
+      ].forEach(({ n, off, scale, alpha, color }) => {
         ctx.beginPath();
-        const pts = 64;
-        for (let i = 0; i <= pts; i++) {
-          const theta = (i / pts) * Math.PI * 2;
-          // Organic fluid wave formula with harmonic frequencies
+        for (let i = 0; i <= 72; i++) {
+          const θ = (i / 72) * Math.PI * 2;
           const wave =
-            Math.sin(theta * layer.count + t * 2 + layer.offset) * (8 + currentLevel * 20) +
-            Math.cos(theta * 3 - t * 1.5) * (6 + currentLevel * 15);
-          const r = (baseRadius + wave) * layer.scale;
-          const x = centerX + Math.cos(theta) * r;
-          const y = centerY + Math.sin(theta) * r;
-
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+            Math.sin(θ * n + t * 2.5 + off) * (9 + lvl * 22) +
+            Math.cos(θ * 3 - t * 1.8) * (6 + lvl * 16);
+          const r = (base + wave) * scale;
+          const x = cx + Math.cos(θ) * r;
+          const y = cy + Math.sin(θ) * r;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         ctx.closePath();
-        ctx.fillStyle = layer.color;
-        ctx.globalAlpha = layer.alpha;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
         ctx.fill();
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
       });
 
-      // 3. Draw Concentric Pulsating Sound Waves
+      // Sound rings
       if (voiceState === "listening" || voiceState === "speaking") {
-        for (let ring = 1; ring <= 3; ring++) {
+        for (let ring = 1; ring <= 4; ring++) {
+          const rr = base + ((t * 28 * ring) % 100);
+          const ra = Math.max(0, 1 - (rr - base) / 100);
           ctx.beginPath();
-          const ringRadius = baseRadius + ((t * 30 * ring) % 90);
-          const ringAlpha = Math.max(0, 1 - (ringRadius - baseRadius) / 90);
-          ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
-          ctx.strokeStyle = color3;
-          ctx.globalAlpha = ringAlpha * 0.4;
+          ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+          ctx.strokeStyle = c3;
+          ctx.globalAlpha = ra * 0.45;
           ctx.lineWidth = 1.5;
           ctx.stroke();
-          ctx.globalAlpha = 1.0;
+          ctx.globalAlpha = 1;
         }
       }
 
-      // 4. Draw Floating Orbital Stardust Particles
+      // Orbital stardust
       particlesRef.current.forEach((p) => {
         p.angle += p.speed;
-        const currentDist = p.dist + (voiceState === "listening" ? currentLevel * 30 : 0);
-        const px = centerX + Math.cos(p.angle) * currentDist;
-        const py = centerY + Math.sin(p.angle) * currentDist;
-
+        const d = p.dist + (voiceState !== "idle" ? lvl * 28 : 0);
+        const px = cx + Math.cos(p.angle) * d;
+        const py = cy + Math.sin(p.angle) * d;
         ctx.beginPath();
         ctx.arc(px, py, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-        ctx.shadowColor = color1;
-        ctx.shadowBlur = 8;
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.shadowColor = c1;
+        ctx.shadowBlur = 10;
         ctx.fill();
         ctx.shadowBlur = 0;
       });
 
-      // 5. Core Center Highlight
-      const coreGradient = ctx.createRadialGradient(
-        centerX - baseRadius * 0.2, centerY - baseRadius * 0.2, 0,
-        centerX, centerY, baseRadius * 0.8
-      );
-      coreGradient.addColorStop(0, "rgba(255, 255, 255, 0.95)");
-      coreGradient.addColorStop(0.3, color3);
-      coreGradient.addColorStop(1, "rgba(0, 0, 0, 0)");
-
+      // Core glint
+      const core = ctx.createRadialGradient(cx - base * 0.22, cy - base * 0.22, 0, cx, cy, base * 0.85);
+      core.addColorStop(0, "rgba(255,255,255,0.98)");
+      core.addColorStop(0.3, c3);
+      core.addColorStop(1, "rgba(0,0,0,0)");
       ctx.beginPath();
-      ctx.arc(centerX, centerY, baseRadius * 0.8, 0, Math.PI * 2);
-      ctx.fillStyle = coreGradient;
+      ctx.arc(cx, cy, base * 0.85, 0, Math.PI * 2);
+      ctx.fillStyle = core;
       ctx.fill();
 
       animFrameRef.current = requestAnimationFrame(render);
     };
 
     render();
-
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, [voiceState]);
 
-  const stopMic = () => {
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((t) => t.stop());
-      micStreamRef.current = null;
-    }
-    if (audioCtxRef.current) {
-      audioCtxRef.current.close();
-      audioCtxRef.current = null;
-    }
+  const stopMic = useCallback(() => {
+    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    micStreamRef.current = null;
+    audioCtxRef.current?.close();
+    audioCtxRef.current = null;
     audioLevelRef.current = 0;
-  };
+  }, []);
 
-  const startListening = async () => {
+  // Speak AI reply with natural TTS in the target language
+  const speak = useCallback(
+    (text: string, lang: ConcreteLang, onDone?: () => void) => {
+      if (isMuted || !text.trim()) {
+        onDone?.();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      isSpeakingRef.current = true;
+      setVoiceState("speaking");
+
+      // Clean text for speech
+      const clean = text
+        .replace(/#{1,6}\s*/g, "")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/`{1,3}[^`]*`{1,3}/g, "code snippet")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/[-*+]\s/g, "")
+        .replace(/\n{2,}/g, ". ")
+        .replace(/\n/g, " ")
+        .trim();
+
+      // Split into natural sentences
+      const sentences = clean.match(/[^.!?।]+[.!?।]+|[^.!?।]+$/g) || [clean];
+      let idx = 0;
+
+      const speakNext = () => {
+        if (idx >= sentences.length || !isSpeakingRef.current) {
+          isSpeakingRef.current = false;
+          onDone?.();
+          return;
+        }
+
+        const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
+        const voice = pickVoice(lang);
+        if (voice) utt.voice = voice;
+        utt.lang = lang;
+        utt.rate = 1.0;
+        utt.pitch = 1.0;
+        utt.volume = 1.0;
+
+        utt.onend = speakNext;
+        utt.onerror = () => {
+          isSpeakingRef.current = false;
+          onDone?.();
+        };
+
+        window.speechSynthesis.speak(utt);
+      };
+
+      speakNext();
+    },
+    [isMuted]
+  );
+
+  // Full AI call — sends user message, detects language, streams response, speaks back
+  const callAI = useCallback(
+    async (userText: string) => {
+      setVoiceState("processing");
+      setStatusText(
+        languageMode === "te-IN"
+          ? "ఆలోచిస్తున్నాను..."
+          : languageMode === "hi-IN"
+          ? "सोच रहा हूँ..."
+          : "Thinking..."
+      );
+      setAiReply("");
+
+      // Detect language from user's utterance if in auto mode
+      let targetLang: ConcreteLang =
+        languageMode === "auto" ? detectLanguageFromText(userText) : languageMode;
+      setDetectedLang(targetLang);
+
+      historyRef.current.push({ role: "user", content: userText });
+
+      const currentConfig = LANG_OPTIONS[languageMode];
+      const promptPayload = `[Instruction: ${currentConfig.systemPrompt}]\nUser: ${userText}`;
+
+      let fullReply = "";
+      try {
+        await streamMessage(
+          promptPayload,
+          undefined,
+          undefined,
+          "auto",
+          false,
+          false,
+          (event: StreamEvent) => {
+            if (event.type === "token") {
+              fullReply += event.token || "";
+              setAiReply(fullReply);
+            }
+          }
+        );
+      } catch {
+        fullReply =
+          targetLang === "te-IN"
+            ? "క్షమించండి, నేను అర్థం చేసుకోలేదు. దయచేసి మళ్ళీ చెప్పండి."
+            : targetLang === "hi-IN"
+            ? "क्षमा करें, मुझे समझ नहीं आया। कृपया पुनः प्रयास करें।"
+            : "Sorry, I couldn't process that. Please try again.";
+        setAiReply(fullReply);
+      }
+
+      // Re-detect language on reply in case AI switched into Telugu/Hindi
+      if (languageMode === "auto") {
+        const replyLang = detectLanguageFromText(fullReply);
+        targetLang = replyLang;
+        setDetectedLang(replyLang);
+      }
+
+      historyRef.current.push({ role: "assistant", content: fullReply });
+
+      speak(fullReply, targetLang, () => {
+        setVoiceState("idle");
+        setStatusText(
+          targetLang === "te-IN"
+            ? "మాట్లాడడానికి నొక్కండి"
+            : targetLang === "hi-IN"
+            ? "बोलने के लिए टैप करें"
+            : "Tap the orb to talk"
+        );
+        // Auto-resume listening in continuous mode
+        if (shouldContinueRef.current) {
+          setTimeout(() => startListening(), 400);
+        }
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [languageMode, speak]
+  );
+
+  const startListening = useCallback(async () => {
+    if (voiceState === "speaking") {
+      window.speechSynthesis.cancel();
+      isSpeakingRef.current = false;
+    }
+
     setVoiceState("listening");
-    setStatusText("Listening... speak your prompt");
+    transcriptRef.current = "";
     setTranscript("");
+    setAiReply("");
+    setStatusText(
+      languageMode === "te-IN"
+        ? "వింటున్నాను... మాట్లాడండి"
+        : languageMode === "hi-IN"
+        ? "सुन रहा हूँ... बोलिए"
+        : "Listening... speak now"
+    );
 
-    // Audio context for dynamic visualizer feedback
+    // Microphone audio analyser for visualizer
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       micStreamRef.current = stream;
-      const ctx = new AudioContext();
-      audioCtxRef.current = ctx;
-      const analyser = ctx.createAnalyser();
+      const actx = new AudioContext();
+      audioCtxRef.current = actx;
+      const analyser = actx.createAnalyser();
       analyserRef.current = analyser;
       analyser.fftSize = 64;
-      const src = ctx.createMediaStreamSource(stream);
-      src.connect(analyser);
+      actx.createMediaStreamSource(stream).connect(analyser);
 
-      const updateLevel = () => {
+      const tick = () => {
         if (!analyserRef.current) return;
         const data = new Uint8Array(analyserRef.current.frequencyBinCount);
         analyserRef.current.getByteFrequencyData(data);
-        const sum = data.reduce((a, b) => a + b, 0);
-        const avg = sum / data.length;
-        audioLevelRef.current = Math.min(1.0, avg / 80);
-        if (micStreamRef.current) {
-          requestAnimationFrame(updateLevel);
-        }
+        audioLevelRef.current = Math.min(1, data.reduce((a, b) => a + b, 0) / data.length / 75);
+        if (micStreamRef.current) requestAnimationFrame(tick);
       };
-      updateLevel();
+      tick();
     } catch {}
 
-    // Speech Recognition
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recog = new SpeechRecognition();
-      recog.continuous = false;
-      recog.interimResults = true;
-      recog.lang = "en-US";
-      recognitionRef.current = recog;
-
-      recog.onresult = (event: any) => {
-        let t = "";
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          t += event.results[i][0].transcript;
-        }
-        setTranscript(t);
-      };
-
-      recog.onend = () => {
-        stopMic();
-        setVoiceState("processing");
-        setStatusText("Synthesizing response...");
-        setTimeout(() => {
-          if (transcript) {
-            onTranscript(transcript);
-          }
-          setVoiceState("idle");
-          setStatusText("Tap or hold the glowing orb to speak");
-          setTranscript("");
-        }, 500);
-      };
-
-      recog.onerror = () => {
-        stopMic();
-        setVoiceState("idle");
-        setStatusText("Microphone idle — tap to speak");
-      };
-
-      recog.start();
-    } else {
-      setStatusText("Speech recognition not supported in this browser.");
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      setStatusText("Speech recognition not supported. Please use Chrome browser.");
       setVoiceState("idle");
       stopMic();
+      return;
     }
-  };
 
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-    }
-    stopMic();
-  };
+    const recog = new SR();
+    recognitionRef.current = recog;
+    recog.continuous = false;
+    recog.interimResults = true;
+    recog.lang = LANG_OPTIONS[languageMode].recogLang;
 
-  const toggleListen = () => {
+    recog.onresult = (e: any) => {
+      let t = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        t += e.results[i][0].transcript;
+      }
+      transcriptRef.current = t;
+      setTranscript(t);
+
+      // In auto mode, show live auto-detected language tag
+      if (languageMode === "auto" && t.trim()) {
+        const liveLang = detectLanguageFromText(t);
+        setDetectedLang(liveLang);
+      }
+    };
+
+    recog.onend = () => {
+      stopMic();
+      const said = transcriptRef.current.trim();
+      if (said) {
+        callAI(said);
+        onTranscript?.(said);
+      } else {
+        setVoiceState("idle");
+        setStatusText(
+          languageMode === "te-IN"
+            ? "మాట్లాడడానికి నొక్కండి"
+            : languageMode === "hi-IN"
+            ? "बोलने के लिए टैप करें"
+            : "Tap to speak"
+        );
+      }
+    };
+
+    recog.onerror = (e: any) => {
+      stopMic();
+      setVoiceState("idle");
+      setStatusText(
+        e.error === "no-speech"
+          ? languageMode === "te-IN"
+            ? "మాట్లాడటం వినిపించలేదు — మళ్ళీ ప్రయత్నించండి"
+            : languageMode === "hi-IN"
+            ? "कोई आवाज़ नहीं मिली — पुनः प्रयास करें"
+            : "No speech detected — tap to try again"
+          : `Error: ${e.error}`
+      );
+    };
+
+    recog.start();
+  }, [languageMode, voiceState, callAI, stopMic, onTranscript]);
+
+  const handleOrbClick = () => {
     if (voiceState === "listening") {
-      stopListening();
+      recognitionRef.current?.stop();
+      stopMic();
+      setVoiceState("idle");
+      setStatusText(
+        languageMode === "te-IN"
+          ? "మాట్లాడడానికి నొక్కండి"
+          : languageMode === "hi-IN"
+          ? "बोलने के लिए टैप करें"
+          : "Tap to speak"
+      );
+    } else if (voiceState === "speaking") {
+      window.speechSynthesis.cancel();
+      isSpeakingRef.current = false;
+      if (shouldContinueRef.current) {
+        startListening();
+      } else {
+        setVoiceState("idle");
+      }
     } else if (voiceState === "idle") {
       startListening();
     }
   };
 
+  const toggleContinuous = () => {
+    const next = !conversationActive;
+    shouldContinueRef.current = next;
+    setConversationActive(next);
+    if (next && voiceState === "idle") {
+      startListening();
+    }
+  };
+
+  // Greet on open
   useEffect(() => {
-    return () => {
+    if (voicesReady) {
+      const greeting = LANG_OPTIONS[languageMode].greeting;
+      const initialLang: ConcreteLang = languageMode === "auto" ? "en-US" : languageMode;
+      setAiReply(greeting);
+      setStatusText(
+        languageMode === "te-IN"
+          ? "మాట్లాడడానికి నొక్కండి"
+          : languageMode === "hi-IN"
+          ? "बोलने के लिए टैप करें"
+          : "Tap the orb to start talking"
+      );
+      setTimeout(() => {
+        speak(greeting, initialLang, () => {
+          setVoiceState("idle");
+        });
+      }, 300);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voicesReady]);
+
+  // Cleanup on unmount
+  useEffect(
+    () => () => {
+      shouldContinueRef.current = false;
+      isSpeakingRef.current = false;
+      window.speechSynthesis.cancel();
       stopMic();
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {}
-      }
-    };
-  }, []);
+      try {
+        recognitionRef.current?.abort();
+      } catch {}
+    },
+    [stopMic]
+  );
+
+  const toggleMute = () => {
+    setIsMuted((m) => {
+      if (!m) window.speechSynthesis.cancel();
+      return !m;
+    });
+  };
+
+  const switchLanguageMode = (mode: LanguageMode) => {
+    window.speechSynthesis.cancel();
+    recognitionRef.current?.abort();
+    stopMic();
+    setLanguageMode(mode);
+    setDetectedLang(mode === "auto" ? "en-US" : mode);
+    setVoiceState("idle");
+    setTranscript("");
+    setAiReply("");
+    setStatusText(
+      mode === "te-IN"
+        ? "మాట్లాడడానికి నొక్కండి"
+        : mode === "hi-IN"
+        ? "बोलने के लिए टैప करें"
+        : "Tap to speak"
+    );
+  };
+
+  const detectedLangLabel: Record<ConcreteLang, string> = {
+    "te-IN": "Telugu (తెలుగు 🇮🇳)",
+    "hi-IN": "Hindi (हिंदी 🇮🇳)",
+    "en-US": "English 🇺🇸",
+  };
+
+  const stateLabel: Record<VoiceState, string> = {
+    idle: languageMode === "te-IN" ? "సిద్ధంగా ఉంది" : languageMode === "hi-IN" ? "तैयार" : "Ready",
+    listening:
+      languageMode === "te-IN"
+        ? "వింటున్నాను..."
+        : languageMode === "hi-IN"
+        ? "सुन रहा हूँ..."
+        : "Listening...",
+    processing:
+      languageMode === "te-IN"
+        ? "ఆలోచిస్తున్నాను..."
+        : languageMode === "hi-IN"
+        ? "सोच रहा हूँ..."
+        : "Thinking...",
+    speaking:
+      languageMode === "te-IN"
+        ? "మాట్లాడుతున్నాను..."
+        : languageMode === "hi-IN"
+        ? "बोल रहा हूँ..."
+        : "Speaking...",
+  };
+
+  const stateColor: Record<VoiceState, string> = {
+    idle: "text-zinc-400",
+    listening: "text-cyan-400",
+    processing: "text-pink-400",
+    speaking: "text-emerald-400",
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl animate-fadeIn">
-      <div className="relative w-full max-w-lg rounded-3xl border border-zinc-800/90 shadow-2xl bg-zinc-950/95 overflow-hidden p-8 flex flex-col items-center gap-6">
-        {/* Close button */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center animate-fadeIn"
+      style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(24px)" }}
+    >
+      <div
+        className="relative w-full max-w-md rounded-3xl overflow-hidden p-7 flex flex-col items-center gap-4"
+        style={{
+          background: "rgba(8,8,20,0.90)",
+          backdropFilter: "blur(40px) saturate(180%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.80), inset 0 1px 0 rgba(255,255,255,0.07)",
+        }}
+      >
+        {/* Top specular bevel */}
+        <div
+          className="absolute top-0 inset-x-0 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)" }}
+        />
+
+        {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-full text-zinc-500 hover:text-white transition-colors"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Title */}
-        <div className="text-center space-y-1">
+        {/* Header */}
+        <div className="text-center space-y-1 pt-1">
           <div className="flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <h2 className="text-base font-bold text-white tracking-wide">Yash.AI Live Voice</h2>
+            <Sparkles className="w-4 h-4 text-cyan-400 animate-liquid-pulse" />
+            <h2 className="text-base font-bold text-white tracking-wide">Yash.AI Voice</h2>
           </div>
-          <p className="text-xs text-zinc-500">Conversational Real-Time AI</p>
+          <div className={`text-xs font-semibold tracking-wide ${stateColor[voiceState]}`}>
+            {stateLabel[voiceState]}
+          </div>
         </div>
 
-        {/* Dynamic Animational Art Canvas (Glowing Orb Visualizer) */}
+        {/* Language selector tabs */}
         <div
-          onClick={toggleListen}
-          className="relative cursor-pointer group flex items-center justify-center"
+          className="flex items-center gap-1 rounded-full p-1 max-w-full overflow-x-auto custom-scrollbar"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
         >
-          <canvas
-            ref={canvasRef}
-            className="w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute flex flex-col items-center pointer-events-none">
-            {voiceState === "listening" ? (
-              <MicOff className="w-6 h-6 text-white animate-pulse drop-shadow-md" />
-            ) : (
-              <Mic className="w-6 h-6 text-white drop-shadow-md" />
-            )}
-          </div>
+          {(Object.keys(LANG_OPTIONS) as LanguageMode[]).map((mode) => {
+            const opt = LANG_OPTIONS[mode];
+            const isSelected = languageMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => switchLanguageMode(mode)}
+                className="px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 whitespace-nowrap"
+                style={
+                  isSelected
+                    ? {
+                        background: "linear-gradient(135deg, rgba(59,130,246,0.80), rgba(124,92,252,0.75))",
+                        color: "white",
+                        boxShadow: "0 2px 8px rgba(59,130,246,0.30)",
+                      }
+                    : { color: "rgba(161,161,170,1)" }
+                }
+              >
+                <span>{opt.flag}</span>
+                <span>{opt.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Transcript Box */}
-        {transcript && (
-          <div className="w-full p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-200 text-center min-h-12 leading-relaxed italic animate-fadeIn shadow-inner">
-            "{transcript}"
+        {/* Auto-detected language badge */}
+        {languageMode === "auto" && (
+          <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[11px] text-cyan-300 animate-fadeIn">
+            <Globe className="w-3 h-3 text-cyan-400 animate-spin" style={{ animationDuration: "12s" }} />
+            <span>Auto-Switching: <strong className="text-white">{detectedLangLabel[detectedLang]}</strong></span>
           </div>
         )}
 
-        {/* Status Text & Controls */}
-        <div className="text-center space-y-3">
-          <p className="text-xs text-zinc-400 font-medium tracking-tight">
-            {statusText}
-          </p>
-
-          <div className="flex items-center justify-center gap-2">
-            <button
-              onClick={toggleListen}
-              className={`px-5 py-2 rounded-full text-xs font-semibold shadow-lg transition-all ${
-                voiceState === "listening"
-                  ? "bg-red-600 hover:bg-red-500 text-white animate-pulse"
-                  : "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white"
-              }`}
-            >
-              {voiceState === "listening" ? "Stop Listening" : "Tap to Speak"}
-            </button>
+        {/* Orb canvas visualizer */}
+        <div
+          onClick={handleOrbClick}
+          className="relative cursor-pointer group flex items-center justify-center select-none my-1"
+          title={voiceState === "listening" ? "Tap to stop" : "Tap to speak"}
+        >
+          <canvas
+            ref={canvasRef}
+            className="w-[240px] h-[240px] sm:w-[260px] sm:h-[260px] transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute flex flex-col items-center pointer-events-none gap-1">
+            {voiceState === "listening" ? (
+              <MicOff className="w-7 h-7 text-white drop-shadow-lg" />
+            ) : voiceState === "speaking" ? (
+              <Volume2 className="w-7 h-7 text-white animate-liquid-pulse drop-shadow-lg" />
+            ) : (
+              <Mic className="w-7 h-7 text-white drop-shadow-lg" />
+            )}
+            <span className="text-[10px] text-white/60 font-medium">
+              {voiceState === "listening"
+                ? "tap to stop"
+                : voiceState === "speaking"
+                ? "speaking..."
+                : "tap to talk"}
+            </span>
           </div>
+        </div>
+
+        {/* Live conversation bubble */}
+        {(transcript || aiReply) && (
+          <div
+            className="w-full rounded-2xl p-3.5 space-y-2 animate-fadeIn"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              maxHeight: "110px",
+              overflowY: "auto",
+            }}
+          >
+            {transcript && (
+              <p className="text-xs text-cyan-300 italic leading-relaxed">
+                <span className="text-zinc-500 not-italic font-semibold mr-1">You:</span>
+                {transcript}
+              </p>
+            )}
+            {aiReply && (
+              <p className="text-xs text-zinc-200 leading-relaxed line-clamp-3">
+                <span className="text-violet-400 font-semibold mr-1">Yash.AI:</span>
+                {aiReply}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Status */}
+        <p className="text-xs text-zinc-500 text-center">{statusText}</p>
+
+        {/* Controls footer */}
+        <div className="flex items-center justify-center gap-3 w-full">
+          {/* Continuous conversation toggle */}
+          <button
+            onClick={toggleContinuous}
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all"
+            style={
+              conversationActive
+                ? {
+                    background: "linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.20))",
+                    border: "1px solid rgba(16,185,129,0.35)",
+                    color: "rgba(110,231,183,1)",
+                  }
+                : {
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "rgba(161,161,170,1)",
+                  }
+            }
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                conversationActive ? "bg-emerald-400 animate-pulse" : "bg-zinc-600"
+              }`}
+            />
+            {conversationActive
+              ? languageMode === "te-IN"
+                ? "సంభాషణ నడుస్తోంది"
+                : "Conversation On"
+              : languageMode === "te-IN"
+              ? "స్వయంచాలక సంభాషణ"
+              : "Auto Converse"}
+          </button>
+
+          {/* Mute toggle */}
+          <button
+            onClick={toggleMute}
+            className="p-2.5 rounded-full transition-all"
+            style={{
+              background: isMuted ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
+              border: `1px solid ${isMuted ? "rgba(239,68,68,0.30)" : "rgba(255,255,255,0.08)"}`,
+              color: isMuted ? "rgba(252,165,165,1)" : "rgba(161,161,170,1)",
+            }}
+            title={isMuted ? "Unmute voice" : "Mute voice"}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
     </div>

@@ -82,7 +82,7 @@ export default function VisualCanvasPage() {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
-  const getToken = () => typeof window !== "undefined" ? localStorage.getItem("access_token") || "" : "";
+  const getToken = () => typeof window !== "undefined" ? (localStorage.getItem("yash_ai_token") || localStorage.getItem("access_token") || "") : "";
 
   // Auto-save every 30 seconds
   useEffect(() => {

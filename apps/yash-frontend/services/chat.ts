@@ -39,7 +39,8 @@ export async function sendMessage(
   filePath?: string,
   model = "auto",
   webSearch = true,
-  localOnly = false
+  localOnly = false,
+  projectId?: string
 ): Promise<ChatResponse> {
   const response = await api.post<ChatResponse>("/chat/", {
     message,
@@ -48,6 +49,7 @@ export async function sendMessage(
     model,
     web_search: webSearch,
     local_only: localOnly,
+    project_id: projectId,
   });
   return response.data;
 }
@@ -60,7 +62,8 @@ export async function streamMessage(
   webSearch: boolean,
   localOnly: boolean,
   onEvent: (event: StreamEvent) => void,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  projectId?: string
 ): Promise<void> {
   const token = typeof window !== "undefined" ? localStorage.getItem("yash_ai_token") : null;
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -78,6 +81,7 @@ export async function streamMessage(
       model,
       web_search: webSearch,
       local_only: localOnly,
+      project_id: projectId,
     }),
     signal: abortSignal,
   });

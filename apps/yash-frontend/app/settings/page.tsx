@@ -13,18 +13,28 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
   RefreshCw,
   Zap,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { fetchProviders, ProvidersResponse } from "@/services/providers";
 import { exportUserData, deleteUserAccount } from "@/services/feedback";
-import { getMemorySettings, updateMemorySettings } from "@/services/memory";
-import { removeToken } from "@/services/auth";
+import { getMemorySettings, updateMemorySettings, trainOnHistory } from "@/services/memory";
+import { removeToken, getToken } from "@/services/auth";
+import MemoryModal from "@/components/MemoryModal";
 
 export default function SettingsPage() {
   const [providersData, setProvidersData] = useState<ProvidersResponse | null>(null);
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [learningEnabled, setLearningEnabled] = useState(true);
+  const [hasTrained, setHasTrained] = useState(false);
+  const [totalMemories, setTotalMemories] = useState(0);
+  const [lastTrainedAt, setLastTrainedAt] = useState<string | null>(null);
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingFeedback, setTrainingFeedback] = useState<{ text: string; isError: boolean } | null>(null);
+  const [isMemoryModalOpen, setIsMemoryModalOpen] = useState(false);
   const [localOnly, setLocalOnly] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
@@ -41,6 +51,9 @@ export default function SettingsPage() {
       const [pRes, memRes] = await Promise.all([fetchProviders(), getMemorySettings()]);
       setProvidersData(pRes);
       setLearningEnabled(memRes.learning_enabled);
+      setHasTrained(Boolean(memRes.has_trained));
+      setTotalMemories(memRes.total_memories);
+      setLastTrainedAt(memRes.last_trained_at || null);
 
       const savedLocalOnly = localStorage.getItem("yash_ai_local_only") === "true";
       setLocalOnly(savedLocalOnly);
@@ -53,6 +66,38 @@ export default function SettingsPage() {
     const next = !learningEnabled;
     setLearningEnabled(next);
     await updateMemorySettings(next);
+  };
+
+  const handleTrainHistoryOnce = async () => {
+    const token = getToken();
+    if (!token) {
+      setTrainingFeedback({
+        text: "Please sign in or create an account to train AI on your chat history.",
+        isError: true,
+      });
+      return;
+    }
+
+    setIsTraining(true);
+    setTrainingFeedback(null);
+    try {
+      const res = await trainOnHistory();
+      if (res) {
+        setHasTrained(true);
+        setTotalMemories(res.memories.length);
+        setTrainingFeedback({
+          text: `✨ Training complete! Yash.AI learned ${res.extracted_count} personalized habits from your past conversations. Memory is now used automatically in chat without asking.`,
+          isError: false,
+        });
+      }
+    } catch (e: any) {
+      setTrainingFeedback({
+        text: e?.response?.data?.detail || e?.message || "Failed to train AI on history.",
+        isError: true,
+      });
+    } finally {
+      setIsTraining(false);
+    }
   };
 
   const handleToggleLocalOnly = () => {
@@ -129,7 +174,7 @@ export default function SettingsPage() {
             </h2>
             <button
               onClick={loadSettings}
-              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
+              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" />
               <span>Refresh Status</span>
@@ -204,17 +249,37 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 3. AI Memory & Learning */}
-        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
-          <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-purple-400" />
-            <span>AI Memory & Personalization</span>
-          </h2>
+        {/* 3. AI Memory & Personalization */}
+        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-6">
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <span className="text-xs font-semibold text-zinc-200 block">Continuous Habit Learning</span>
+            <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+              <Brain className="w-4 h-4 text-purple-400" />
+              <span>AI Memory & Personalization</span>
+            </h2>
+            <button
+              type="button"
+              onClick={() => setIsMemoryModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            >
+              <span>Manage Memories</span>
+              {totalMemories > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold">
+                  {totalMemories}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 leading-relaxed">
+            <span className="font-semibold text-white">✨ Seamless Background Memory:</span> Yash.AI uses your saved preferences and learned habits automatically during every conversation without asking for confirmation.
+          </div>
+
+          {/* Continuous Habit Learning Toggle */}
+          <div className="flex items-center justify-between pt-1">
+            <div className="space-y-0.5 max-w-xl">
+              <span className="text-xs font-semibold text-zinc-200 block">Continuous Background Learning</span>
               <span className="text-[11px] text-zinc-500">
-                Allow Yash.AI to automatically extract your coding styles, stack preferences, and goals.
+                Automatically adapts to your coding conventions, preferred frameworks, and project instructions silently as you chat.
               </span>
             </div>
             <button
@@ -230,6 +295,70 @@ export default function SettingsPage() {
                 }`}
               />
             </button>
+          </div>
+
+          {/* One-Time History Training Card */}
+          <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">One-Time Chat History Training</span>
+                  {hasTrained ? (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                      <Check className="w-3 h-3" />
+                      <span>Trained</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                      Ready to Train Once
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-400 mt-1 max-w-lg leading-relaxed">
+                  Scan your historical conversations once so Yash.AI immediately knows your tech stacks, preferred coding patterns, and past projects.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTrainHistoryOnce}
+                disabled={isTraining}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50 ${
+                  hasTrained
+                    ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/20"
+                }`}
+              >
+                {isTraining ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Analyzing History...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{hasTrained ? "Re-train AI on History" : "Train AI on History (Run Once)"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {trainingFeedback && (
+              <div
+                className={`p-3 rounded-xl text-xs flex items-center gap-2 animate-fadeIn ${
+                  trainingFeedback.isError
+                    ? "bg-red-500/10 border border-red-500/25 text-red-300"
+                    : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-300"
+                }`}
+              >
+                {trainingFeedback.isError ? (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                )}
+                <span>{trainingFeedback.text}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -277,6 +406,13 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Memory Manager Modal */}
+      <MemoryModal
+        isOpen={isMemoryModalOpen}
+        onClose={() => setIsMemoryModalOpen(false)}
+        onMemoriesUpdated={(count) => setTotalMemories(count)}
+      />
     </div>
   );
 }

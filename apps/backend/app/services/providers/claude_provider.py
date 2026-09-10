@@ -98,8 +98,14 @@ class ClaudeProvider(AIProvider):
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             res = await client.post(self.api_url, headers=headers, json=payload)
+            if res.status_code == 429:
+                self.cooldown_until = time.time() + 60
+                raise RuntimeError("Anthropic rate limited (429) — falling back to next provider.")
+            if res.status_code in (503, 529):
+                self.cooldown_until = time.time() + 30
+                raise RuntimeError(f"Anthropic overloaded ({res.status_code}) — no capacity available, falling back.")
             if res.status_code != 200:
-                raise RuntimeError(f"Anthropic error {res.status_code}: {res.text}")
+                raise RuntimeError(f"Anthropic error {res.status_code}: {res.text[:300]}")
             data = res.json()
             return data["content"][0]["text"]
 

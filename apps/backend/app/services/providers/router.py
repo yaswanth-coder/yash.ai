@@ -60,20 +60,21 @@ class ProviderRouter:
 
         req = (requested_model_or_provider or "auto").strip()
 
-        # Explicit prefix e.g. "ollama:llama3.2:latest", "groq:llama-3.3-70b-versatile"
+        # Explicit provider:model prefix e.g. "ollama:llama3.2", "groq:llama-3.3-70b-versatile"
         for p_name, p_inst in self.providers.items():
             if req.startswith(f"{p_name}:"):
-                model_name = req.replace(f"{p_name}:", "")
+                model_name = req[len(p_name) + 1:]
                 priority = [p_name] + [p for p in self._get_priority_list() if p != p_name]
                 return [(p, self.providers[p], model_name if p == p_name else None) for p in priority]
 
-        # Explicit provider name
+        # Explicit provider name only
         if req.lower() in self.providers:
             target_p = req.lower()
             priority = [target_p] + [p for p in self._get_priority_list() if p != target_p]
             return [(p, self.providers[p], None) for p in priority]
 
-        # AUTO mode: priority list
+        # AUTO or unrecognized model ID — fall through to priority list
+        # (unrecognized model IDs like "claude-sonnet-4-6" are treated as AUTO)
         priority = self._get_priority_list()
         return [(p, self.providers[p], None) for p in priority]
 
@@ -159,31 +160,31 @@ class ProviderRouter:
                     file_info=file_info,
                     model=specific_model,
                 )
-                
-                # Verify first token before committing to this provider
-                first_token = None
+                yielded_meta = False
                 async for token in stream_gen:
                     if token:
-                        first_token = token
-                        break
-
-                if first_token is not None:
-                    yield {
-                        "type": "meta",
-                        "provider": p_name,
-                        "model": specific_model or "default",
-                        "fallback_used": fallback_used,
-                        "original_provider": original_provider if fallback_used else None,
-                    }
-                    yield {"type": "token", "token": first_token}
-                    async for remaining_token in stream_gen:
-                        if remaining_token:
-                            yield {"type": "token", "token": remaining_token}
+                        if not yielded_meta:
+                            yield {
+                                "type": "meta",
+                                "provider": p_name,
+                                "model": specific_model or "default",
+                                "fallback_used": fallback_used,
+                                "original_provider": original_provider if fallback_used else None,
+                            }
+                            yielded_meta = True
+                        yield {"type": "token", "token": token}
+                if yielded_meta:
                     return
 
             except Exception as ex:
                 last_error = ex
+                err_str = str(ex).lower()
                 logger.warning(f"Streaming provider '{p_name}' failed: {ex}")
+                # Apply cooldown for rate limits and capacity errors
+                if any(k in err_str for k in ("429", "rate", "quota")):
+                    provider.cooldown_until = time.time() + 60
+                elif any(k in err_str for k in ("503", "529", "overload", "capacity", "unavailable")):
+                    provider.cooldown_until = time.time() + 30
                 continue
 
         yield {

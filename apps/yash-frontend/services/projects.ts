@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { getToken } from "./auth";
 
 export interface ProjectItem {
   id: string;
@@ -10,6 +11,9 @@ export interface ProjectItem {
 }
 
 export async function fetchProjects(): Promise<ProjectItem[]> {
+  if (!getToken()) {
+    return [];
+  }
   try {
     const res = await api.get<ProjectItem[]>("/projects/");
     return res.data;

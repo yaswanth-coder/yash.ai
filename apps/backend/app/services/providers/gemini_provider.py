@@ -1,6 +1,7 @@
 import os
 import time
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, AsyncGenerator
 from google import genai
@@ -8,14 +9,25 @@ from google.genai import types
 from app.core.config import settings
 from app.services.providers.base import AIProvider, ProviderModel, ProviderHealth
 
+logger = logging.getLogger("yash.ai.providers.gemini")
+
 
 class GeminiProvider(AIProvider):
     def __init__(self):
         super().__init__(name="gemini", is_local=False)
         self.default_models = [
-            ProviderModel(id="gemini-flash-latest", name="Gemini Flash", context_window=1000000, description="Fast, state-of-the-art multimodal model"),
-            ProviderModel(id="gemini-3.5-flash", name="Gemini 3.5 Flash", context_window=1000000, description="Latest Gemini 3.5 Flash model"),
-            ProviderModel(id="gemini-3.6-flash", name="Gemini 3.6 Flash", context_window=1000000, description="Advanced multimodal model"),
+            ProviderModel(
+                id="gemini-3.6-flash",
+                name="Gemini 3.6 Flash",
+                context_window=1000000,
+                description="Fast, state-of-the-art flagship multimodal AI"
+            ),
+            ProviderModel(
+                id="gemini-flash-latest",
+                name="Gemini Flash Latest",
+                context_window=1000000,
+                description="High-speed auto-updating Gemini Flash"
+            ),
         ]
 
     def _get_api_key(self) -> str:
@@ -29,7 +41,10 @@ class GeminiProvider(AIProvider):
         return bool(key and len(key) > 10)
 
     def _get_client(self) -> genai.Client:
-        return genai.Client(api_key=self._get_api_key())
+        return genai.Client(
+            api_key=self._get_api_key(),
+            http_options=types.HttpOptions(timeout=20000)
+        )
 
     async def health_check(self) -> ProviderHealth:
         now_str = datetime.now(timezone.utc).isoformat()
@@ -41,7 +56,7 @@ class GeminiProvider(AIProvider):
             client = self._get_client()
             def _check():
                 return client.models.generate_content(
-                    model=os.getenv("GEMINI_MODEL", "gemini-flash-latest"),
+                    model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
                     contents="ping",
                 )
             await asyncio.to_thread(_check)
@@ -96,7 +111,7 @@ class GeminiProvider(AIProvider):
 
         config = types.GenerateContentConfig(
             system_instruction=system_prompt or "You are Yash.AI, an intelligent, concise, and structured AI assistant.",
-            temperature=0.6,
+            temperature=0.7,
         )
         return contents, config
 
@@ -111,9 +126,9 @@ class GeminiProvider(AIProvider):
     ) -> str:
         client = self._get_client()
         contents, config = self._build_contents_and_config(message, history, system_prompt, file_info)
-        target_model = model if model and model != "auto" else os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+        target_model = model if model and model not in ["auto", "gemini"] else os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
-        models_to_try = [target_model, "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash"]
+        models_to_try = [target_model, "gemini-3.6-flash"]
         models_to_try = list(dict.fromkeys(models_to_try))
 
         last_err = None
@@ -130,6 +145,7 @@ class GeminiProvider(AIProvider):
             except Exception as e:
                 last_err = e
                 err_str = str(e)
+                logger.warning(f"Gemini model {m} failed: {e}")
                 if "429" in err_str or "quota" in err_str.lower() or "resource_exhausted" in err_str.lower():
                     self.status = "QUOTA_EXCEEDED"
                 continue
@@ -146,9 +162,9 @@ class GeminiProvider(AIProvider):
     ) -> AsyncGenerator[str, None]:
         client = self._get_client()
         contents, config = self._build_contents_and_config(message, history, system_prompt, file_info)
-        target_model = model if model and model != "auto" else os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+        target_model = model if model and model not in ["auto", "gemini"] else os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
-        models_to_try = [target_model, "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash"]
+        models_to_try = [target_model, "gemini-3.6-flash"]
         models_to_try = list(dict.fromkeys(models_to_try))
 
         queue: asyncio.Queue = asyncio.Queue()
@@ -175,14 +191,13 @@ class GeminiProvider(AIProvider):
 
         last_error = None
         for m in models_to_try:
-            # Drain queue
             while not queue.empty():
                 try:
                     queue.get_nowait()
                 except Exception:
                     break
 
-            worker_future = loop.run_in_executor(None, _worker, m)
+            loop.run_in_executor(None, _worker, m)
             
             got_tokens = False
             while True:
@@ -199,7 +214,6 @@ class GeminiProvider(AIProvider):
             if got_tokens:
                 return
 
-        # If direct streaming failed, fallback
         if last_error:
             fallback_text = await self.generate_response(message, history, system_prompt, file_info, model)
             yield fallback_text
