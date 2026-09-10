@@ -12,7 +12,7 @@ class Settings:
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     
     # MongoDB
-    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb+srv://yashai_render:<4dxHFERXar9s8f4L>@cluster0.p1jzks2.mongodb.net/?appName=Cluster0")
     MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "yash_ai")
     
     # Security
