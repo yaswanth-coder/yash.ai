@@ -20,8 +20,16 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sql_engine)
 
 def get_client() -> AsyncIOMotorClient:
     global _client
+
     if _client is None:
-        _client = AsyncIOMotorClient(settings.MONGODB_URI)
+        _client = AsyncIOMotorClient(
+            settings.MONGODB_URI,
+            serverSelectionTimeoutMS=10000,
+            connectTimeoutMS=10000,
+            socketTimeoutMS=20000,
+            retryWrites=True,
+        )
+
     return _client
 
 

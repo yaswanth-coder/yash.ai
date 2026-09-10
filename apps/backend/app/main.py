@@ -21,6 +21,7 @@ from app.api.assets import router as assets_router
 from app.api.tools_gateway import router as tools_gateway_router
 from app.api.generations import router as generations_router
 from app.api.canvas import router as canvas_router
+from app.core.database import setup_indexes, get_database
 
 import sys
 # Reconfigure stdout/stderr to UTF-8 on Windows to safely handle AI emojis
@@ -78,7 +79,6 @@ app.include_router(tools_gateway_router)
 app.include_router(generations_router)
 app.include_router(canvas_router)
 
-
 @app.get("/")
 def home():
     return {
@@ -86,3 +86,19 @@ def home():
         "version": settings.VERSION,
         "database": "MongoDB",
     }
+
+@app.get("/health")
+async def health():
+    try:
+        db = get_database()
+        await db.command("ping")
+        return {
+            "status": "healthy",
+            "database": "connected"
+        }
+    except Exception as ex:
+        return {
+            "status": "degraded",
+            "database": "disconnected",
+            "error": str(ex)
+        }
