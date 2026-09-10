@@ -1,32 +1,123 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { Paperclip, Mic, MicOff, Send, X, FileText } from "lucide-react";
-import { uploadFile } from "@/services/chat";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  ArrowUp,
+  Paperclip,
+  X,
+  FileText,
+  Mic,
+  MicOff,
+  Globe,
+  Square,
+  Sparkles,
+} from "lucide-react";
+import api from "@/lib/axios";
 
 interface ChatInputProps {
-  onSendMessage: (message: string, filePath?: string) => void;
+  onSendMessage: (content: string, filePath?: string) => void;
   disabled?: boolean;
+  onStopGeneration?: () => void;
+  isStreaming?: boolean;
+  webSearchEnabled?: boolean;
+  onToggleWebSearch?: (enabled: boolean) => void;
 }
 
-export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
-  const [inputMessage, setInputMessage] = useState("");
-  const [attachedFile, setAttachedFile] = useState<{ filename: string; file_path: string } | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+export default function ChatInput({
+  onSendMessage,
+  disabled,
+  onStopGeneration,
+  isStreaming = false,
+  webSearchEnabled = true,
+  onToggleWebSearch,
+}: ChatInputProps) {
+  const [message, setMessage] = useState("");
+  const [fileAttachment, setFileAttachment] = useState<{ path: string; name: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
 
-  const handleSend = () => {
-    if ((!inputMessage.trim() && !attachedFile) || disabled || isUploading) return;
-    onSendMessage(inputMessage, attachedFile?.file_path);
-    setInputMessage("");
-    setAttachedFile(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Initialize Web Speech API
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        setSpeechSupported(true);
+        const recog = new SpeechRecognition();
+        recog.continuous = true;
+        recog.interimResults = true;
+        recog.lang = "en-US";
+
+        recog.onresult = (event: any) => {
+          let transcript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            transcript += event.results[i][0].transcript;
+          }
+          if (transcript) {
+            setMessage((prev) => (prev ? `${prev} ${transcript}` : transcript));
+          }
+        };
+
+        recog.onerror = (e: any) => {
+          console.warn("Speech recognition error:", e);
+          setIsListening(false);
+        };
+
+        recog.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recog;
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error("Could not start speech recognition:", e);
+      }
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+    }
+  }, [message]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSubmit();
+    }
+  };
+
+  const handleSubmit = () => {
+    if ((!message.trim() && !fileAttachment) || disabled || uploading) return;
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+    onSendMessage(message, fileAttachment?.path);
+    setMessage("");
+    setFileAttachment(null);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
     }
   };
 
@@ -34,141 +125,142 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate size (max 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      alert("File size exceeds 20MB limit.");
+      return;
+    }
+
     try {
-      setIsUploading(true);
-      const res = await uploadFile(file);
-      setAttachedFile({
-        filename: res.filename,
-        file_path: res.file_path,
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await api.post("/files/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setFileAttachment({
+        path: response.data.file_path,
+        name: response.data.filename,
       });
     } catch (err) {
-      console.error("File upload error:", err);
+      console.error("Upload error:", err);
       alert("Failed to upload file. Please try again.");
     } finally {
-      setIsUploading(false);
+      setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const toggleSpeechRecognition = () => {
-    if (typeof window === "undefined") return;
-
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = "en-US";
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputMessage((prev) => (prev ? `${prev} ${transcript}` : transcript));
-        setIsListening(false);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      console.error("Failed to start speech recognition:", err);
-      setIsListening(false);
-    }
-  };
-
   return (
-    <div className="w-full max-w-4xl mx-auto p-3 sm:p-4">
-      {/* File Attachment Chip */}
-      {attachedFile && (
-        <div className="mb-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
+    <div className="max-w-4xl mx-auto w-full px-4 pb-4">
+      {/* File Attachment Card */}
+      {fileAttachment && (
+        <div className="flex items-center gap-2 mb-2 p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl w-fit text-xs text-zinc-200 animate-fadeIn">
           <FileText className="w-4 h-4 text-blue-400" />
-          <span className="font-mono truncate max-w-[250px]">{attachedFile.filename}</span>
+          <span className="truncate max-w-[220px] font-medium">{fileAttachment.name}</span>
           <button
-            onClick={() => setAttachedFile(null)}
-            className="p-0.5 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors"
+            onClick={() => setFileAttachment(null)}
+            className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Main Input Box */}
-      <div className="relative flex items-center gap-2 rounded-2xl bg-zinc-900/90 border border-zinc-800 p-2 sm:p-3 shadow-lg focus-within:border-blue-500/50 transition-all">
-        {/* Hidden File Input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept=".pdf,.png,.jpg,.jpeg,.webp"
-          className="hidden"
-        />
-
-        {/* Attachment Button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || isUploading}
-          className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-xl transition-colors shrink-0 disabled:opacity-50"
-          title="Attach PDF or Image"
-        >
-          <Paperclip className="w-5 h-5" />
-        </button>
-
-        {/* Text Input */}
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
+      {/* Main Composer Box */}
+      <div className="relative rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-xl focus-within:border-blue-500/60 transition-all p-2.5">
+        <textarea
+          ref={textareaRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={disabled}
-          placeholder={isUploading ? "Uploading file..." : "Ask Yash.AI anything..."}
-          className="flex-1 bg-transparent text-sm sm:text-base text-zinc-100 placeholder-zinc-500 outline-none px-2"
+          placeholder={isListening ? "Listening... speak now" : "Ask Yash.AI anything (Shift + Enter for new line)..."}
+          rows={1}
+          disabled={disabled || isStreaming}
+          className="w-full bg-transparent px-2.5 py-1 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none max-h-44 custom-scrollbar"
         />
 
-        {/* Speech Dictation Button */}
-        <button
-          onClick={toggleSpeechRecognition}
-          disabled={disabled}
-          className={`p-2 rounded-xl transition-colors shrink-0 ${
-            isListening
-              ? "bg-red-600/20 text-red-400 border border-red-500/50 animate-pulse"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-          }`}
-          title={isListening ? "Listening... click to stop" : "Speak to Yash.AI"}
-        >
-          {isListening ? <MicOff className="w-5 h-5 text-red-500" /> : <Mic className="w-5 h-5" />}
-        </button>
+        {/* Action Controls Bar */}
+        <div className="flex items-center justify-between pt-2 px-1 text-xs">
+          <div className="flex items-center gap-2">
+            {/* File Attachment */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx,.csv,.json"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled || uploading || isStreaming}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors disabled:opacity-40"
+              title="Attach File / Document / Image"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
 
-        {/* Send Button */}
-        <button
-          onClick={handleSend}
-          disabled={(!inputMessage.trim() && !attachedFile) || disabled || isUploading}
-          className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-md disabled:opacity-40 disabled:hover:bg-blue-600 shrink-0"
-          title="Send message"
-        >
-          <Send className="w-4 h-4" />
-        </button>
+            {/* Voice Input Button */}
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={disabled || isStreaming}
+                className={`p-2 rounded-xl transition-colors ${
+                  isListening
+                    ? "bg-red-500/20 text-red-400 animate-pulse border border-red-500/30"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
+                }`}
+                title={isListening ? "Stop Voice Input" : "Voice Input (Microphone)"}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+            )}
+
+            {/* Web Search Quick Toggle */}
+            {onToggleWebSearch && (
+              <button
+                type="button"
+                onClick={() => onToggleWebSearch(!webSearchEnabled)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs transition-colors ${
+                  webSearchEnabled
+                    ? "bg-blue-500/15 text-blue-400 border border-blue-500/25 font-semibold"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                }`}
+                title="Toggle Web Search Tool"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Search: {webSearchEnabled ? "ON" : "OFF"}</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isStreaming && onStopGeneration ? (
+              <button
+                type="button"
+                onClick={onStopGeneration}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs shadow-md shadow-red-600/20 transition-all cursor-pointer"
+              >
+                <Square className="w-3 h-3 fill-current" />
+                <span>Stop</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={(!message.trim() && !fileAttachment) || disabled || uploading}
+                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-30 disabled:hover:bg-blue-600 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+                title="Send message"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

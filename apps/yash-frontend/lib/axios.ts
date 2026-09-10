@@ -24,4 +24,15 @@ api.interceptors.request.use(
   }
 );
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("yash_ai_token");
+      localStorage.removeItem("yash_ai_user");
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
