@@ -55,14 +55,15 @@ class ToolRegistry:
         # 2. Math Calculator
         async def _exec_calculator(expression: str, **kwargs):
             res = await self._calculator.execute(expression=expression)
-            return res.data if hasattr(res, "data") else res
+            val = res.output if hasattr(res, "output") else res
+            return {"result": val}
 
         self.register(ToolDefinition(
             id="calculator.evaluate",
             name="Mathematical Evaluation Engine",
             description="Evaluate complex mathematical and scientific equations with AST safety.",
             category="compute",
-            permission_tier=PermissionTier.EXECUTE,
+            permission_tier=PermissionTier.READ,
             input_schema={"type": "object", "properties": {"expression": {"type": "string"}}, "required": ["expression"]},
             output_schema={"type": "object", "properties": {"result": {"type": "number"}}},
             requires_confirmation=False,
