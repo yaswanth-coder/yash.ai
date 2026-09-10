@@ -18,6 +18,7 @@ from app.api.user import router as user_router
 from app.api.personas import router as personas_router
 from app.api.rag import router as rag_router
 from app.api.assets import router as assets_router
+from app.api.tools_gateway import router as tools_gateway_router
 
 import sys
 # Reconfigure stdout/stderr to UTF-8 on Windows to safely handle AI emojis
@@ -71,6 +72,7 @@ app.include_router(user_router)
 app.include_router(personas_router)
 app.include_router(rag_router)
 app.include_router(assets_router)
+app.include_router(tools_gateway_router)
 
 
 @app.get("/")
