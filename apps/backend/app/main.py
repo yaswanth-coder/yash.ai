@@ -53,14 +53,17 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+
+        # Vercel
+        "https://yash-a4jg2uyz2-yaswanth-coders-projects.vercel.app",
+        "https://yash-9z5aj5zq3-yaswanth-coders-projects.vercel.app",
     ],
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|172\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+)(:\d+)?$",
+    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.vercel\.app$|^https?://(localhost|127\.0\.0\.1|172\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
-
 # Register all API modules
 app.include_router(auth_router)
 app.include_router(chat_router)
