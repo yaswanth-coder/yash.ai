@@ -66,8 +66,7 @@ export async function streamMessage(
   projectId?: string
 ): Promise<void> {
   const token = typeof window !== "undefined" ? localStorage.getItem("yash_ai_token") : null;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://yash-ai-np70.onrender.com";
   const response = await fetch(`${baseUrl}/chat/stream`, {
     method: "POST",
     headers: {
