@@ -23,7 +23,7 @@
 ## ✨ Key Capabilities
 
 - ⚡ **High-Speed SSE Streaming** — Token-by-token real-time generation with sub-100ms first-chunk response time.
-- 🧠 **Multi-Provider AI Router** — Seamless fallback across **Google Gemini (3.6 Flash)**, **Ollama Local LLMs**, **Groq**, **OpenAI**, and **Anthropic**.
+- 🧠 **Multi-Provider AI Router** — Seamless fallback across **Google Gemini (3.6 Flash)**, **NVIDIA NIM (Llama 3.3, DeepSeek R1, Nemotron)**, **Ollama Local LLMs**, **Groq**, **OpenAI**, and **Anthropic**.
 - 🎨 **Create Studio Workspaces** — Dedicated creative generation hubs for **Images**, **Videos**, **UI/Canvas Design**, **3D Models**, **Code**, **Audio**, **Documents**, and **Deep Research**.
 - 📁 **Projects & Context Workspaces** — Attach documents, custom instructions, and organize conversational threads into dedicated projects.
 - 💾 **Long-Term Memory & Learning** — Learns user preferences, coding habits, and project context silently over time.
@@ -196,7 +196,7 @@ docker compose up --build
 | :--- | :--- |
 | **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4, Lucide Icons |
 | **Backend API** | FastAPI, Uvicorn, Pydantic v2, Python-Jose (JWT), BCrypt |
-| **AI Providers** | Google GenAI SDK (`gemini-3.6-flash`), Ollama, Groq, OpenAI, Anthropic |
+| **AI Providers** | Google GenAI SDK (`gemini-3.6-flash`), NVIDIA NIM, Ollama, Groq, OpenAI, Anthropic |
 | **Database** | MongoDB (Motor / PyMongo) + SQLite async fallback |
 | **Mobile & PWA** | Web App Manifest, Service Worker (`sw.js`), Capacitor |
 | **DevOps** | Docker, Docker Compose, Multi-stage Alpine builds |

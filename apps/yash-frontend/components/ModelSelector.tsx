@@ -14,6 +14,8 @@ interface ModelSelectorProps {
 const STATIC_MODELS: ModelItem[] = [
   { id: "auto", name: "Auto (Best Available)", description: "Intelligent automatic provider routing & failover" },
   { id: "gemini", name: "Gemini Flash", description: "Fast flagship multimodal AI — default" },
+  { id: "nvidia:meta/llama-3.3-70b-instruct", name: "NVIDIA — Llama 3.3 70B", description: "NVIDIA NIM accelerated GPU inference" },
+  { id: "nvidia:deepseek-ai/deepseek-r1", name: "NVIDIA — DeepSeek R1", description: "Leading open reasoning model on NVIDIA NIM" },
   { id: "groq:llama-3.3-70b-versatile", name: "Groq — Llama 3.3 70B", description: "Ultra-fast LPU inference" },
   { id: "anthropic:claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", description: "Advanced reasoning & coding" },
   { id: "openai:gpt-4o", name: "OpenAI GPT-4o", description: "State-of-the-art multimodal intelligence" },
@@ -41,6 +43,7 @@ export default function ModelSelector({
               id === "auto" ||
               id === "gemini" ||
               id.startsWith("gemini:") ||
+              id.startsWith("nvidia:") ||
               id.startsWith("anthropic:") ||
               id.startsWith("groq:") ||
               id.startsWith("ollama:") ||

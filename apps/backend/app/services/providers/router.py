@@ -6,6 +6,7 @@ from app.services.providers.base import AIProvider, ProviderModel, ProviderHealt
 from app.services.providers.gemini_provider import GeminiProvider
 from app.services.providers.ollama_provider import OllamaProvider
 from app.services.providers.groq_provider import GroqProvider
+from app.services.providers.nvidia_provider import NvidiaProvider
 from app.services.providers.claude_provider import ClaudeProvider
 from app.services.providers.openai_provider import OpenAIProvider
 
@@ -18,12 +19,13 @@ class ProviderRouter:
             "gemini": GeminiProvider(),
             "ollama": OllamaProvider(),
             "groq": GroqProvider(),
+            "nvidia": NvidiaProvider(),
             "anthropic": ClaudeProvider(),
             "openai": OpenAIProvider(),
         }
 
     def _get_priority_list(self) -> List[str]:
-        raw = os.getenv("AI_PROVIDER_PRIORITY", "gemini,ollama,groq,anthropic,openai")
+        raw = os.getenv("AI_PROVIDER_PRIORITY", "gemini,ollama,groq,nvidia,anthropic,openai")
         return [p.strip().lower() for p in raw.split(",") if p.strip().lower() in self.providers]
 
     async def get_all_models(self) -> List[ProviderModel]:

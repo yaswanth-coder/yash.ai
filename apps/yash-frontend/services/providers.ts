@@ -40,6 +40,7 @@ export async function fetchModels(): Promise<ModelItem[]> {
     return [
       { id: "auto", name: "Auto (Best Available)", description: "Automatically routes to the best available provider" },
       { id: "gemini", name: "Google Gemini 3.6", description: "State of the art multimodal model" },
+      { id: "nvidia:meta/llama-3.3-70b-instruct", name: "NVIDIA (Llama 3.3 70B)", description: "NVIDIA NIM accelerated inference" },
       { id: "ollama:llama3", name: "Ollama (Local Llama 3)", is_local: true, description: "Runs locally on your device" },
       { id: "groq:llama-3.3-70b-versatile", name: "Groq (Llama 3.3 70B)", description: "High-speed inference" },
     ];
