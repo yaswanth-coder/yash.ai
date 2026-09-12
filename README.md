@@ -21,6 +21,42 @@
 
 ---
 
+## 🖼️ Screenshots
+
+### 💬 Chat Interface
+
+![Yash.AI Chat UI](docs/screenshots/chat-ui.jpg)
+
+*Token-by-token streaming chat with markdown rendering, code highlighting, and multi-provider AI routing.*
+
+---
+
+### 🎨 Create Studio
+
+![Yash.AI Create Studio](docs/screenshots/create-studio.jpg)
+
+*8 dedicated creative workspaces — Image, Video, Code, 3D, Audio, Research, Design, and Doc Synthesis.*
+
+---
+
+### 🤖 Multi-Model Provider Hub
+
+![Yash.AI Model Providers](docs/screenshots/model-providers.jpg)
+
+*Real-time provider health dashboard with custom model support — add any OpenAI-compatible endpoint.*
+
+---
+
+### 📱 Mobile App (iOS / Android)
+
+<div align="center">
+<img src="docs/screenshots/mobile-view.jpg" alt="Yash.AI Mobile App" width="320" />
+</div>
+
+*Native-feel mobile experience with bottom navigation, safe-area insets, and PWA installability.*
+
+---
+
 ## ✨ Key Capabilities
 
 - ⚡ **High-Speed SSE Streaming** — Token-by-token real-time generation with sub-100ms first-chunk response time.
@@ -32,6 +68,7 @@
 - 🛡️ **Enterprise Security & Hybrid DB** — JWT Auth, BCrypt password hashing, and auto-switching **MongoDB Atlas** with SQLite fallback.
 - 🌐 **Multilingual Auto-Fluency** — Native fluency in Telugu, Hindi, Spanish, French, Japanese, and 50+ languages.
 - 🔧 **Bring Your Own Model** — Add any custom model via UI by providing an API endpoint, model ID, and key (xKiro, OpenAI-compatible, NVIDIA NIM).
+- 🔒 **Persistent Sessions** — Stay signed in across browser restarts; only log out when you explicitly choose to.
 
 ---
 
@@ -159,7 +196,7 @@ AI_PROVIDER_PRIORITY=gemini,nvidia,groq,anthropic,openai,ollama
 ```bash
 cd apps/backend
 pip install -r requirements.txt
-python -m uvicorn app.main:app --host 0.0.0.1 --port 8000 --reload
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 > 📖 **Swagger API Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
