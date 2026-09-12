@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import api from "@/lib/axios";
+import MobileNav from "@/components/MobileNav";
 
 interface FileItem {
   id: string;
@@ -67,29 +68,29 @@ export default function LibraryPage() {
   const filtered = files.filter((f) => f.filename.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 font-sans">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 border-b border-zinc-800/80 pb-4 sm:pb-6">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Link
               href="/chat"
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-                <LibraryIcon className="w-5 h-5 text-purple-400" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-2 truncate">
+                <LibraryIcon className="w-5 h-5 text-purple-400 shrink-0" />
                 <span>Document & Knowledge Library</span>
               </h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 truncate">
                 Uploaded PDFs, code files, and documents indexed for AI retrieval and RAG.
               </p>
             </div>
           </div>
 
-          <div>
+          <div className="flex items-center gap-2">
             <input
               type="file"
               ref={fileInputRef}
@@ -100,7 +101,7 @@ export default function LibraryPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-blue-600/20 transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-blue-600/20 transition-all cursor-pointer disabled:opacity-50 shrink-0"
             >
               <Upload className="w-4 h-4" />
               <span>{uploading ? "Uploading..." : "Upload Document"}</span>
@@ -162,6 +163,7 @@ export default function LibraryPage() {
           ))}
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

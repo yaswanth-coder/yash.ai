@@ -35,6 +35,7 @@ import { getMemorySettings, updateMemorySettings, trainOnHistory } from "@/servi
 import { removeToken, getToken } from "@/services/auth";
 import MemoryModal from "@/components/MemoryModal";
 import AddModelModal from "@/components/AddModelModal";
+import MobileNav from "@/components/MobileNav";
 
 export default function SettingsPage() {
   const [providersData, setProvidersData] = useState<ProvidersResponse | null>(null);
@@ -169,23 +170,23 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Link
               href="/chat"
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-400" />
-                <span>Settings & Architecture Dashboard</span>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-2 truncate">
+                <Settings className="w-5 h-5 text-blue-400 shrink-0" />
+                <span>Settings & Architecture</span>
               </h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 truncate">
                 Manage AI provider gateways, memory engine, privacy mode, and user data.
               </p>
             </div>
@@ -193,7 +194,7 @@ export default function SettingsPage() {
         </div>
 
         {/* 1. AI Providers Gateway Dashboard */}
-        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
+        <div className="p-4 sm:p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
               <Cpu className="w-4 h-4 text-blue-400" />
@@ -526,6 +527,7 @@ export default function SettingsPage() {
           setCustomModels((prev) => [newModel, ...prev]);
         }}
       />
+      <MobileNav />
     </div>
   );
 }

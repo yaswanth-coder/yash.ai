@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { ProjectItem, fetchProjects, createProject, deleteProject } from "@/services/projects";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import MobileNav from "@/components/MobileNav";
 
 export default function ProjectsPage() {
   const ready = useAuthGuard();
@@ -88,23 +89,23 @@ export default function ProjectsPage() {
     });
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-12 font-sans flex flex-col justify-between">
-      <div className="max-w-5xl mx-auto w-full space-y-8">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-12 font-sans flex flex-col justify-between pb-24 md:pb-12">
+      <div className="max-w-5xl mx-auto w-full space-y-6 sm:space-y-8">
         {/* Header matching Claude reference */}
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <Link
               href="/chat"
               className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-normal text-zinc-100 font-serif">
+            <h1 className="text-xl sm:text-3xl font-normal text-zinc-100 font-serif">
               Projects
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {showSearch ? (
               <div className="relative flex items-center">
                 <Search className="w-4 h-4 absolute left-2.5 text-zinc-500" />
@@ -311,6 +312,7 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+      <MobileNav />
     </div>
   );
 }

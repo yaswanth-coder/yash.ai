@@ -12,6 +12,36 @@ from app.services.providers.base import AIProvider, ProviderModel, ProviderHealt
 logger = logging.getLogger("yash.ai.providers.gemini")
 
 
+def _safe_extract_text(response_or_chunk) -> str:
+    """Safely extract text from a Gemini response/chunk without triggering
+    the 'model output must contain either output text or tool calls' error
+    that occurs when accessing .text on an empty/blocked/thinking chunk."""
+    try:
+        # Try the fast path first
+        candidates = getattr(response_or_chunk, "candidates", None)
+        if not candidates:
+            return ""
+        candidate = candidates[0]
+        # Check finish reason — SAFETY or other non-STOP reasons may have no text
+        finish_reason = getattr(candidate, "finish_reason", None)
+        if finish_reason and str(finish_reason) not in ("STOP", "MAX_TOKENS", "FinishReason.STOP", "1", "2", "0", "FINISH_REASON_STOP", "FINISH_REASON_MAX_TOKENS", "FinishReason.MAX_TOKENS"):
+            return ""
+        content = getattr(candidate, "content", None)
+        if not content:
+            return ""
+        parts = getattr(content, "parts", None)
+        if not parts:
+            return ""
+        texts = []
+        for part in parts:
+            t = getattr(part, "text", None)
+            if t:
+                texts.append(t)
+        return "".join(texts)
+    except Exception:
+        return ""
+
+
 class GeminiProvider(AIProvider):
     def __init__(self):
         super().__init__(name="gemini", is_local=False)
@@ -134,14 +164,27 @@ class GeminiProvider(AIProvider):
         last_err = None
         for m in models_to_try:
             try:
-                def _call():
+                def _call(model_name=m):
                     res = client.models.generate_content(
-                        model=m,
+                        model=model_name,
                         contents=contents,
                         config=config,
                     )
-                    return res.text or ""
-                return await asyncio.to_thread(_call)
+                    # Use safe extraction to avoid 'model output must contain output text' error
+                    text = _safe_extract_text(res)
+                    if not text:
+                        # Last resort: try the .text property directly but catch the specific error
+                        try:
+                            text = res.text or ""
+                        except Exception:
+                            text = ""
+                    return text
+                result = await asyncio.to_thread(_call)
+                if result:
+                    return result
+                # Empty result — try next model
+                last_err = RuntimeError(f"Gemini model {m} returned empty response")
+                continue
             except Exception as e:
                 last_err = e
                 err_str = str(e)
@@ -179,10 +222,15 @@ class GeminiProvider(AIProvider):
                     config=config,
                 )
                 for chunk in stream:
-                    try:
-                        text = chunk.text
-                    except Exception:
-                        text = None
+                    # Safe extraction: avoids 'model output must contain output text' error
+                    # which is raised when accessing .text on thinking/tool/blocked chunks
+                    text = _safe_extract_text(chunk)
+                    if not text:
+                        # Fallback: try direct .text access for simple responses
+                        try:
+                            text = chunk.text
+                        except Exception:
+                            text = None
                     if text:
                         loop.call_soon_threadsafe(queue.put_nowait, text)
                 loop.call_soon_threadsafe(queue.put_nowait, sentinel)

@@ -15,6 +15,7 @@ import {
   FolderKanban,
   Zap,
 } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 
 interface StudioCard {
   id: string;
@@ -121,10 +122,10 @@ const studios: StudioCard[] = [
 
 export default function CreateHubPage() {
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 font-sans">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4 sm:pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -133,11 +134,11 @@ export default function CreateHubPage() {
               <span className="text-zinc-600">•</span>
               <span className="text-xs text-zinc-400">8 Workspaces Available</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-              <Sparkles className="w-7 h-7 text-blue-400" />
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5 sm:gap-3">
+              <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400 shrink-0" />
               <span>Creative Workspaces</span>
             </h1>
-            <p className="text-sm text-zinc-400 max-w-2xl">
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl">
               Launch specialized creative studios for images, video, 3D, canvas, code, audio, documents, and research.
               Every creation automatically synchronizes with your universal projects and cloud assets.
             </p>
@@ -146,7 +147,7 @@ export default function CreateHubPage() {
           <div className="flex items-center gap-3 shrink-0">
             <Link
               href="/projects"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition-colors"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition-colors shrink-0"
             >
               <FolderKanban className="w-4 h-4 text-blue-400" />
               <span>View Projects</span>
@@ -155,7 +156,7 @@ export default function CreateHubPage() {
         </div>
 
         {/* Studio Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {studios.map((studio) => {
             const Icon = studio.icon;
             return (
@@ -214,6 +215,7 @@ export default function CreateHubPage() {
           })}
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

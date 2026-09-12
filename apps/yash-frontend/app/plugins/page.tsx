@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Blocks, Globe, Brain, Calculator, FileSearch, ArrowLeft, ShieldCheck, Check } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 
 interface Plugin {
   id: string;
@@ -56,22 +57,22 @@ export default function PluginsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Link
               href="/chat"
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-                <Blocks className="w-5 h-5 text-emerald-400" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-2 truncate">
+                <Blocks className="w-5 h-5 text-emerald-400 shrink-0" />
                 <span>AI Tools & Plugins</span>
               </h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 truncate">
                 Configure built-in tool capabilities and safe external integrations for Yash.AI.
               </p>
             </div>
@@ -124,6 +125,7 @@ export default function PluginsPage() {
           })}
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

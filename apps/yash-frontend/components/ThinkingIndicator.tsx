@@ -35,19 +35,19 @@ export default function ThinkingIndicator() {
   const currentStep = THINKING_STEPS[stepIndex];
 
   return (
-    <div className="flex justify-start my-4 animate-fadeIn">
-      <div className="flex items-start gap-3.5 max-w-2xl w-full">
+    <div className="flex justify-start my-3 sm:my-4 animate-fadeIn w-full min-w-0">
+      <div className="flex items-start gap-2.5 sm:gap-3.5 max-w-2xl w-full min-w-0">
         {/* AI Avatar with pulsing orbital aura */}
         <div className="relative shrink-0 mt-0.5">
           <div
-            className="w-8 h-8 rounded-2xl flex items-center justify-center text-white relative z-10"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-2xl flex items-center justify-center text-white relative z-10"
             style={{
               background: "linear-gradient(135deg, rgba(59,130,246,0.85), rgba(139,92,246,0.85))",
               boxShadow: "0 0 16px rgba(124,92,252,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
               border: "1px solid rgba(255,255,255,0.18)",
             }}
           >
-            <Brain className="w-4 h-4 text-white animate-pulse" />
+            <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white animate-pulse" />
           </div>
           {/* Ambient Glow */}
           <div
@@ -58,7 +58,7 @@ export default function ThinkingIndicator() {
 
         {/* Liquid Glass Thinking Box */}
         <div
-          className="flex-1 rounded-2xl overflow-hidden transition-all duration-300"
+          className="flex-1 rounded-2xl overflow-hidden transition-all duration-300 min-w-0"
           style={{
             background: "rgba(12, 14, 28, 0.75)",
             backdropFilter: "blur(24px) saturate(180%)",

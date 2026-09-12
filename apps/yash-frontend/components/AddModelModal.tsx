@@ -73,9 +73,9 @@ export default function AddModelModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div
-        className="w-full max-w-lg rounded-2xl p-6 relative space-y-5 shadow-2xl border border-white/10"
+        className="w-full max-w-lg rounded-2xl p-4 sm:p-6 relative space-y-4 sm:space-y-5 shadow-2xl border border-white/10 max-h-[90dvh] overflow-y-auto custom-scrollbar"
         style={{
           background: "rgba(10, 10, 22, 0.95)",
           backdropFilter: "blur(32px)",

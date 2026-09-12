@@ -148,11 +148,11 @@ export default function ChatMessage({
 
   return (
     <>
-      <div className={`flex w-full my-4 ${isUser ? "justify-end" : "justify-start"}`}>
-        <div className={`flex items-start gap-3 max-w-3xl w-full ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+      <div className={`flex w-full my-3 sm:my-4 ${isUser ? "justify-end" : "justify-start"}`}>
+        <div className={`flex items-start gap-2 sm:gap-3 max-w-3xl w-full min-w-0 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
           {/* Avatar */}
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 relative overflow-hidden"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-white shrink-0 relative overflow-hidden"
             style={isUser ? {
               background: "linear-gradient(135deg, rgba(59,130,246,0.90), rgba(79,70,229,0.85))",
               boxShadow: "0 4px 12px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.20)",
@@ -163,17 +163,17 @@ export default function ChatMessage({
               border: "1px solid rgba(255,255,255,0.18)",
             }}
           >
-            {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+            {isUser ? <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             {/* specular highlight on avatar */}
             <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-xl pointer-events-none" />
           </div>
 
           {/* Message Container — liquid glass for AI, solid for user */}
           <div
-            className={`relative group rounded-2xl px-5 py-4 shadow-xs text-sm leading-relaxed transition-all ${
+            className={`relative group rounded-2xl px-3.5 sm:px-5 py-3 sm:py-4 shadow-xs text-xs sm:text-sm leading-relaxed transition-all min-w-0 ${
               isUser
-                ? "text-white rounded-tr-xs"
-                : "text-zinc-100 rounded-tl-xs flex-1"
+                ? "text-white rounded-tr-xs max-w-[88%] sm:max-w-[80%] break-words"
+                : "text-zinc-100 rounded-tl-xs flex-1 max-w-full overflow-hidden"
             }`}
             style={isUser ? {
               background: "linear-gradient(135deg, rgba(59,130,246,0.85), rgba(79,70,229,0.80))",
@@ -605,21 +605,21 @@ function CodeBlock({
           </div>
           <span className="text-blue-400 font-semibold uppercase text-[11px] ml-1">{language}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {onOpenCanvas && (
             <button
               onClick={onOpenCanvas}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-[11px] font-semibold"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-[11px] font-semibold"
               title="Open in Interactive Canvas Studio"
             >
               <Monitor className="w-3 h-3" />
-              <span>Open in Canvas</span>
+              <span className="hidden sm:inline">Open in Canvas</span>
             </button>
           )}
 
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
           >
             {copied ? (
               <>
@@ -629,14 +629,15 @@ function CodeBlock({
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5" />
-                <span className="font-sans text-[11px]">Copy Code</span>
+                <span className="font-sans text-[11px] hidden sm:inline">Copy Code</span>
+                <span className="font-sans text-[11px] sm:hidden">Copy</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      <pre className="p-4 overflow-x-auto font-mono text-xs text-zinc-200 leading-relaxed custom-scrollbar">
+      <pre className="p-3 sm:p-4 overflow-x-auto font-mono text-[11px] sm:text-xs text-zinc-200 leading-relaxed custom-scrollbar max-w-full">
         <code>{value}</code>
       </pre>
     </div>

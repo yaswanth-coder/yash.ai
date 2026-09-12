@@ -530,7 +530,7 @@ function ChatPageContent() {
   };
 
   return (
-    <div className="flex h-screen text-white overflow-hidden font-sans" style={{ background: "#030307" }}>
+    <div className="flex h-[100dvh] max-h-[100dvh] w-full max-w-full text-white overflow-hidden font-sans" style={{ background: "#030307" }}>
       {/* Sidebar */}
       <Sidebar
         conversations={conversations}
@@ -551,7 +551,7 @@ function ChatPageContent() {
       />
 
       {/* Main Chat Workspace */}
-      <main className="flex flex-1 flex-col h-full overflow-hidden relative">
+      <main className="flex flex-1 flex-col h-full overflow-hidden relative min-w-0 w-full">
         {/* Ambient gradient layer */}
         <div
           className="absolute inset-0 pointer-events-none z-0"
@@ -564,7 +564,7 @@ function ChatPageContent() {
 
         {/* Top Header — liquid glass bar */}
         <header
-          className="relative flex items-center justify-between px-4 sm:px-6 py-3 sticky top-0 z-20"
+          className="relative flex items-center justify-between px-2.5 sm:px-6 py-2 sm:py-3 sticky top-0 z-20 gap-1.5 sm:gap-4 w-full"
           style={{
             background: "rgba(6, 6, 16, 0.72)",
             backdropFilter: "blur(32px) saturate(180%)",
@@ -578,16 +578,17 @@ function ChatPageContent() {
             className="absolute top-0 inset-x-0 h-px pointer-events-none"
             style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 30%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.10) 70%, transparent 100%)" }}
           />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="md:hidden p-1.5 sm:p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 touch-target shrink-0 flex items-center justify-center"
+              aria-label="Open sidebar menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Conversation Title & Actions Dropdown (Claude-style header) */}
-            <div className="relative" ref={menuRef}>
+            <div className="relative min-w-0" ref={menuRef}>
               {isRenaming ? (
                 <form onSubmit={handleSaveRenameSubmit} className="flex items-center gap-1.5">
                   <input
@@ -618,25 +619,25 @@ function ChatPageContent() {
               ) : (
                 <button
                   onClick={toggleHeaderMenu}
-                  className="group flex items-center gap-1.5 px-2.5 py-1 rounded-xl hover:bg-zinc-900/90 transition-colors text-left cursor-pointer"
+                  className="group flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl hover:bg-zinc-900/90 transition-colors text-left cursor-pointer min-w-0"
                   title="Conversation options"
                 >
-                  <span className="text-base sm:text-lg font-bold text-zinc-100 max-w-[180px] sm:max-w-xs md:max-w-md truncate">
+                  <span className="text-sm xs:text-base sm:text-lg font-bold text-zinc-100 max-w-[90px] xs:max-w-[130px] sm:max-w-xs md:max-w-md truncate">
                     {currentTitle}
                   </span>
                   {isPinned && (
-                    <Pin className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20 rotate-45 shrink-0" />
+                    <Pin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 fill-amber-400/20 rotate-45 shrink-0" />
                   )}
                   <ChevronDown
-                    className={`w-4 h-4 text-zinc-500 group-hover:text-zinc-300 transition-transform duration-150 ${
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-zinc-300 transition-transform duration-150 shrink-0 ${
                       isHeaderMenuOpen ? "rotate-180" : ""
                     }`}
                   />
                 </button>
               )}
 
-              {/* Status Badges Row */}
-              <div className="flex items-center gap-1.5 pl-2.5 mt-0.5">
+              {/* Status Badges Row (Desktop/Tablet only to keep mobile header clean) */}
+              <div className="hidden sm:flex items-center gap-1.5 pl-2.5 mt-0.5">
                 {currentProjectId && (
                   <span
                     className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
@@ -699,7 +700,7 @@ function ChatPageContent() {
               {/* Dropdown Menu — liquid glass */}
               {isHeaderMenuOpen && (
                 <div
-                  className="absolute top-full left-0 mt-2 w-52 rounded-2xl p-1 text-sm text-zinc-200 z-50 animate-glass-slide-down"
+                  className="absolute top-full left-0 mt-2 w-[calc(100vw-24px)] max-w-[240px] sm:w-56 rounded-2xl p-1 text-sm text-zinc-200 z-50 animate-glass-slide-down"
                   style={{
                     background: "rgba(10, 10, 22, 0.88)",
                     backdropFilter: "blur(32px) saturate(200%)",
@@ -854,12 +855,13 @@ function ChatPageContent() {
           </div>
 
           {/* Model Selector & Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Voice Mode */}
             <button
               onClick={() => setIsVoiceModeOpen(true)}
-              className="glass-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-zinc-300 hover:text-white font-medium cursor-pointer"
+              className="glass-btn flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs text-zinc-300 hover:text-white font-medium cursor-pointer"
               title="Enter Full-Duplex Voice Mode"
+              aria-label="Voice Mode"
             >
               <Mic className="w-3.5 h-3.5 text-blue-400 animate-liquid-pulse" />
               <span className="hidden sm:inline">Voice Mode</span>
@@ -873,7 +875,9 @@ function ChatPageContent() {
 
             <button
               onClick={handleNewChat}
-              className="glass-btn-primary flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white font-medium cursor-pointer"
+              className="glass-btn-primary flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs text-white font-medium cursor-pointer"
+              title="Start New Chat"
+              aria-label="New Chat"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">New Chat</span>
@@ -885,7 +889,7 @@ function ChatPageContent() {
 
         {/* Error Banner */}
         {errorMessage && (
-          <div className="mx-4 mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center justify-between shadow-md">
+          <div className="mx-2.5 sm:mx-4 mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
@@ -900,11 +904,11 @@ function ChatPageContent() {
         )}
 
         {/* Messages Body */}
-        <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="relative z-10 flex-1 overflow-y-auto px-4 sm:px-6 py-6 custom-scrollbar overscroll-contain gpu-smooth">
+        <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="relative z-10 flex-1 overflow-y-auto px-2.5 sm:px-6 py-3 sm:py-6 custom-scrollbar overscroll-contain gpu-smooth min-w-0 w-full">
           {messages.length === 0 ? (
             <EmptyState onSelectSuggestion={(prompt) => handleSendMessage(prompt)} />
           ) : (
-            <div className="max-w-4xl mx-auto space-y-2">
+            <div className="max-w-4xl mx-auto space-y-2 w-full min-w-0">
               {messages.map((msg, index) => (
                 <ChatMessage
                   key={msg.id || index}
@@ -930,7 +934,7 @@ function ChatPageContent() {
 
         {/* Input Composer — liquid glass footer */}
         <div
-          className="relative z-10"
+          className="relative z-10 pb-safe"
           style={{
             background: "rgba(6, 6, 16, 0.70)",
             backdropFilter: "blur(32px) saturate(180%)",

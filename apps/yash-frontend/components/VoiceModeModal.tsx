@@ -693,7 +693,7 @@ export default function VoiceModeModal({ onClose, onTranscript }: VoiceModeModal
       style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(24px)" }}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl overflow-hidden p-7 flex flex-col items-center gap-4"
+        className="relative w-full max-w-[94vw] sm:max-w-md max-h-[92dvh] overflow-y-auto custom-scrollbar rounded-3xl p-4 sm:p-7 flex flex-col items-center gap-3.5 sm:gap-4"
         style={{
           background: "rgba(8,8,20,0.90)",
           backdropFilter: "blur(40px) saturate(180%)",
@@ -774,7 +774,7 @@ export default function VoiceModeModal({ onClose, onTranscript }: VoiceModeModal
         >
           <canvas
             ref={canvasRef}
-            className="w-[240px] h-[240px] sm:w-[260px] sm:h-[260px] transition-transform duration-300 group-hover:scale-105"
+            className="w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[260px] sm:h-[260px] transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute flex flex-col items-center pointer-events-none gap-1">
             {voiceState === "listening" ? (

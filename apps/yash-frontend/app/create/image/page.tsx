@@ -18,6 +18,7 @@ import {
   Save,
   Clock,
 } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 
 const ASPECT_RATIOS = [
   { label: "1:1", value: "1:1", icon: "■" },
@@ -165,25 +166,25 @@ export default function ImageStudioPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col font-sans">
       {/* Studio Header */}
-      <header className="h-14 border-b border-zinc-800/80 px-5 flex items-center justify-between bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <Link href="/create" className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+      <header className="h-14 border-b border-zinc-800/80 px-3 sm:px-5 flex items-center justify-between bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-30">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <Link href="/create" className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0">
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
               <Palette className="w-4 h-4" />
             </div>
-            <span className="font-bold text-sm text-zinc-100">Yash.AI Image Studio</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
+            <span className="font-bold text-xs sm:text-sm text-zinc-100 truncate max-w-[120px] xs:max-w-none">Image Studio</span>
+            <span className="hidden xs:inline-block text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold shrink-0">
               Multi-Provider
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {savedToProject && (
-            <span className="text-xs text-emerald-400 flex items-center gap-1.5">
-              <Save className="w-3 h-3" /> Saved to Project
+            <span className="text-xs text-emerald-400 hidden sm:flex items-center gap-1.5">
+              <Save className="w-3 h-3" /> Saved
             </span>
           )}
           <Link href="/projects" className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 transition-colors">
@@ -195,7 +196,7 @@ export default function ImageStudioPage() {
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
         {/* Left Panel — Controls */}
-        <aside className="lg:col-span-4 xl:col-span-3 border-r border-zinc-800/80 p-5 space-y-5 bg-zinc-950/50 overflow-y-auto">
+        <aside className="lg:col-span-4 xl:col-span-3 border-r border-zinc-800/80 p-3.5 sm:p-5 space-y-4 sm:space-y-5 bg-zinc-950/50 overflow-y-auto pb-24 lg:pb-5">
           <form onSubmit={handleGenerate} className="space-y-5">
             {/* Prompt */}
             <div className="space-y-2">
@@ -423,6 +424,7 @@ export default function ImageStudioPage() {
           )}
         </main>
       </div>
+      <MobileNav />
     </div>
   );
 }

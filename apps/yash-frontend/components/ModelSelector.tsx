@@ -100,27 +100,27 @@ export default function ModelSelector({
         {/* Trigger button — liquid glass */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="glass-btn flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-200 transition-all"
+          className="glass-btn flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-200 transition-all shrink-0"
         >
           {localOnly ? (
-            <Shield className="w-3.5 h-3.5 text-emerald-400" />
+            <Shield className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           ) : activeModelObj?.is_local ? (
-            <Cpu className="w-3.5 h-3.5 text-violet-400" />
+            <Cpu className="w-3.5 h-3.5 text-violet-400 shrink-0" />
           ) : activeModelObj?.id === "auto" ? (
-            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+            <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
           ) : (
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           )}
-          <span className="truncate max-w-[140px] sm:max-w-[180px]">
-            {localOnly ? "Local Only (Ollama)" : activeModelObj?.name}
+          <span className="truncate max-w-[85px] xs:max-w-[120px] sm:max-w-[180px]">
+            {localOnly ? "Local Only" : activeModelObj?.name}
           </span>
-          <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
 
         {/* Dropdown — liquid glass */}
         {isOpen && (
           <div
-            className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-72 sm:w-80 rounded-2xl z-50 p-2 space-y-0.5 animate-glass-slide-down"
+            className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-[calc(100vw-24px)] max-w-xs sm:w-80 rounded-2xl z-50 p-2 space-y-0.5 animate-glass-slide-down"
             style={{
               background: "rgba(8, 8, 20, 0.94)",
               backdropFilter: "blur(32px) saturate(200%)",

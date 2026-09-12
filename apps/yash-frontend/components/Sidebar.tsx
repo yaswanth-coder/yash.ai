@@ -157,7 +157,7 @@ export default function Sidebar({
   const content = (
     <div
       className={`relative flex flex-col h-full transition-all duration-300 ${
-        isCollapsed ? "w-[72px]" : "w-72 sm:w-80"
+        isCollapsed ? "w-[72px]" : "w-[85vw] max-w-[320px] sm:w-80"
       }`}
       style={{
         background: "rgba(5, 5, 14, 0.78)",
@@ -183,7 +183,7 @@ export default function Sidebar({
         }}
       />
 
-      <div className="relative z-10 flex flex-col h-full p-3.5">
+      <div className="relative z-10 flex flex-col h-full p-3.5 pt-safe pb-safe">
         {/* Header / Brand */}
         <div className="flex items-center justify-between px-1.5 py-1 mb-3">
           <Link href="/chat" className="flex items-center gap-2.5 overflow-hidden group">
@@ -210,7 +210,8 @@ export default function Sidebar({
           {isOpenMobile ? (
             <button
               onClick={onCloseMobile}
-              className="glass-btn p-1.5 rounded-lg text-zinc-400 hover:text-white transition-all"
+              className="glass-btn p-2 rounded-xl text-zinc-400 hover:text-white transition-all flex items-center justify-center min-w-[36px] min-h-[36px]"
+              aria-label="Close menu"
             >
               <X className="w-4 h-4" />
             </button>
@@ -588,15 +589,17 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="hidden md:block h-screen sticky top-0 z-30">{content}</aside>
+      <aside className="hidden md:block h-[100dvh] max-h-[100dvh] sticky top-0 z-30">{content}</aside>
       {isOpenMobile && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-50 flex animate-fadeIn">
           <div
             className="fixed inset-0"
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
+            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}
             onClick={onCloseMobile}
           />
-          <div className="relative z-10 h-full">{content}</div>
+          <div className="relative z-10 h-[100dvh] max-h-[100dvh] max-w-[85vw] shadow-2xl animate-glass-slide-down">
+            {content}
+          </div>
         </div>
       )}
     </>

@@ -245,7 +245,7 @@ export default function ChatInput({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 pb-4">
+    <div className="max-w-4xl mx-auto w-full px-2.5 sm:px-4 pb-2 sm:pb-4">
       {/* File Attachment Card */}
       {fileAttachment && (
         <div className="flex items-center gap-2 mb-2 p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl w-fit text-xs text-zinc-200">
@@ -304,7 +304,7 @@ export default function ChatInput({
           }
           rows={1}
           disabled={disabled || isStreaming}
-          className={`w-full bg-transparent px-2.5 py-1 text-sm focus:outline-none resize-none max-h-44 custom-scrollbar transition-colors ${
+          className={`w-full bg-transparent px-2.5 py-1 text-base sm:text-sm focus:outline-none resize-none max-h-44 custom-scrollbar transition-colors ${
             isListening && interimText && !confirmedRef.current
               ? "text-zinc-400" // interim-only text appears slightly greyed
               : "text-zinc-100"

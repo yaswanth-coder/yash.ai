@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Code2, Play, Copy, Check, ArrowLeft, Sparkles, Terminal, FileCode } from "lucide-react";
 import { sendMessage } from "@/services/chat";
 import ChatMessage from "@/components/ChatMessage";
+import MobileNav from "@/components/MobileNav";
 
 export default function CodexPage() {
   const [codePrompt, setCodePrompt] = useState("");
@@ -30,22 +31,22 @@ export default function CodexPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 font-sans">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Link
               href="/chat"
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-blue-400" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-2 truncate">
+                <Code2 className="w-5 h-5 text-blue-400 shrink-0" />
                 <span>Yash.AI Codex</span>
               </h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 truncate">
                 Specialized developer coding workspace for architectural generation, refactoring, and debugging.
               </p>
             </div>
@@ -53,7 +54,7 @@ export default function CodexPage() {
         </div>
 
         {/* Input Form */}
-        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
+        <div className="p-4 sm:p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
           <form onSubmit={handleGenerate} className="space-y-3">
             <div className="flex items-center gap-3">
               <select
@@ -101,6 +102,7 @@ export default function CodexPage() {
           </div>
         )}
       </div>
+      <MobileNav />
     </div>
   );
 }
