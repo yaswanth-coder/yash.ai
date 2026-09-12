@@ -9,6 +9,7 @@ from app.services.providers.groq_provider import GroqProvider
 from app.services.providers.nvidia_provider import NvidiaProvider
 from app.services.providers.claude_provider import ClaudeProvider
 from app.services.providers.openai_provider import OpenAIProvider
+from app.services.providers.custom_provider import CustomProvider
 
 logger = logging.getLogger("yash.ai.router")
 
@@ -22,6 +23,7 @@ class ProviderRouter:
             "nvidia": NvidiaProvider(),
             "anthropic": ClaudeProvider(),
             "openai": OpenAIProvider(),
+            "custom": CustomProvider(),
         }
 
     def _get_priority_list(self) -> List[str]:
@@ -61,6 +63,13 @@ class ProviderRouter:
             return [("ollama", ollama, requested_model_or_provider)]
 
         req = (requested_model_or_provider or "auto").strip()
+
+        # Custom & xKiro dynamic models
+        if req.startswith("custom:") or req.startswith("xkiro:"):
+            custom_p = self.providers.get("custom")
+            if custom_p:
+                priority = ["custom"] + [p for p in self._get_priority_list() if p != "custom"]
+                return [(p, self.providers[p], req if p == "custom" else None) for p in priority]
 
         # Explicit provider:model prefix e.g. "ollama:llama3.2", "groq:llama-3.3-70b-versatile"
         for p_name, p_inst in self.providers.items():

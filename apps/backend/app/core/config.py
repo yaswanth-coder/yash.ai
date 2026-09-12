@@ -13,6 +13,14 @@ class Settings:
 
     # NVIDIA
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
+
+    # xKiro / Custom API
+    XKIRO_API_KEY: str = os.getenv("XKIRO_API_KEY", "")
+    XKIRO_BASE_URL: str = os.getenv("XKIRO_BASE_URL", "https://api.xkiro.com/v1")
+    XKIRO_MODEL: str = os.getenv("XKIRO_MODEL", "xkiro-v1")
+
+    # xAI (Grok)
+    XAI_API_KEY: str = os.getenv("XAI_API_KEY", "")
     
     # MongoDB
     MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb+srv://yashai_render:<4dxHFERXar9s8f4L>@cluster0.p1jzks2.mongodb.net/?appName=Cluster0")

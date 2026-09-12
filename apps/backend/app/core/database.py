@@ -17,6 +17,12 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sql_engine)
 
+# Ensure all SQLAlchemy tables exist
+try:
+    SqlBase.metadata.create_all(bind=sql_engine)
+except Exception:
+    pass
+
 
 def get_client() -> AsyncIOMotorClient:
     global _client

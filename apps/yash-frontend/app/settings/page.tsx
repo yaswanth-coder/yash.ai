@@ -18,16 +18,29 @@ import {
   Zap,
   Check,
   ExternalLink,
+  Plus,
+  Key,
+  Globe,
+  Sparkles,
 } from "lucide-react";
-import { fetchProviders, ProvidersResponse } from "@/services/providers";
+import {
+  fetchProviders,
+  ProvidersResponse,
+  fetchCustomModels,
+  deleteCustomModel,
+  CustomModelItem,
+} from "@/services/providers";
 import { exportUserData, deleteUserAccount } from "@/services/feedback";
 import { getMemorySettings, updateMemorySettings, trainOnHistory } from "@/services/memory";
 import { removeToken, getToken } from "@/services/auth";
 import MemoryModal from "@/components/MemoryModal";
+import AddModelModal from "@/components/AddModelModal";
 
 export default function SettingsPage() {
   const [providersData, setProvidersData] = useState<ProvidersResponse | null>(null);
   const [loadingProviders, setLoadingProviders] = useState(true);
+  const [customModels, setCustomModels] = useState<CustomModelItem[]>([]);
+  const [isAddModelModalOpen, setIsAddModelModalOpen] = useState(false);
   const [learningEnabled, setLearningEnabled] = useState(true);
   const [hasTrained, setHasTrained] = useState(false);
   const [totalMemories, setTotalMemories] = useState(0);
@@ -48,8 +61,13 @@ export default function SettingsPage() {
   const loadSettings = async () => {
     setLoadingProviders(true);
     try {
-      const [pRes, memRes] = await Promise.all([fetchProviders(), getMemorySettings()]);
+      const [pRes, memRes, cModels] = await Promise.all([
+        fetchProviders(),
+        getMemorySettings(),
+        fetchCustomModels(),
+      ]);
       setProvidersData(pRes);
+      setCustomModels(cModels || []);
       setLearningEnabled(memRes.learning_enabled);
       setHasTrained(Boolean(memRes.has_trained));
       setTotalMemories(memRes.total_memories);
@@ -59,6 +77,15 @@ export default function SettingsPage() {
       setLocalOnly(savedLocalOnly);
     } finally {
       setLoadingProviders(false);
+    }
+  };
+
+  const handleDeleteCustomModel = async (modelId: string) => {
+    if (confirm(`Remove custom model '${modelId}'?`)) {
+      const ok = await deleteCustomModel(modelId);
+      if (ok) {
+        setCustomModels((prev) => prev.filter((m) => m.model_id !== modelId));
+      }
     }
   };
 
@@ -218,6 +245,83 @@ export default function SettingsPage() {
               ))}
             </div>
           ) : null}
+        </div>
+
+        {/* 1.5 Custom Connected Models (xKiro, Grok, Custom APIs) */}
+        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <h2 className="text-sm font-bold text-zinc-200">Custom Connected Models</h2>
+              {customModels.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold">
+                  {customModels.length} Active
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAddModelModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Model</span>
+            </button>
+          </div>
+
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Connect external AI models (xKiro, xAI Grok, custom Ollama ports, or any OpenAI-compatible API) with their model ID and API key.
+          </p>
+
+          {customModels.length === 0 ? (
+            <div className="p-4 rounded-xl border border-dashed border-zinc-800 text-center space-y-2">
+              <p className="text-xs text-zinc-500">No custom models connected yet.</p>
+              <button
+                type="button"
+                onClick={() => setIsAddModelModalOpen(true)}
+                className="text-xs font-semibold text-blue-400 hover:text-blue-300 cursor-pointer"
+              >
+                + Add your first custom model or API key
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {customModels.map((cm) => (
+                <div
+                  key={cm.model_id}
+                  className="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-2.5 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white truncate max-w-[160px]">{cm.name}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono">
+                        CUSTOM
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 font-mono mt-0.5 truncate">{cm.model_id}</p>
+                    {cm.description && (
+                      <p className="text-[10px] text-zinc-500 line-clamp-1 mt-1">{cm.description}</p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-500">
+                    <div className="flex items-center gap-1.5 truncate max-w-[180px]">
+                      <Key className="w-3 h-3 text-amber-400 shrink-0" />
+                      <span className="font-mono text-zinc-400">{cm.api_key}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCustomModel(cm.model_id)}
+                      className="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-500/10 transition-colors cursor-pointer"
+                      title="Delete custom model"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 2. Privacy & Local Only Mode */}
@@ -412,6 +516,15 @@ export default function SettingsPage() {
         isOpen={isMemoryModalOpen}
         onClose={() => setIsMemoryModalOpen(false)}
         onMemoriesUpdated={(count) => setTotalMemories(count)}
+      />
+
+      {/* Add Custom Model Modal */}
+      <AddModelModal
+        isOpen={isAddModelModalOpen}
+        onClose={() => setIsAddModelModalOpen(false)}
+        onModelAdded={(newModel) => {
+          setCustomModels((prev) => [newModel, ...prev]);
+        }}
       />
     </div>
   );

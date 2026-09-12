@@ -63,3 +63,17 @@ class SqlFile(Base):
 
     user = relationship("SqlUser", back_populates="files")
     conversation = relationship("SqlConversation", back_populates="files")
+
+
+class SqlCustomModel(Base):
+    __tablename__ = "custom_models"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), nullable=True, index=True)
+    model_id = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    base_url = Column(String(512), nullable=False, default="https://api.openai.com/v1")
+    api_key = Column(String(512), nullable=False)
+    context_window = Column(Integer, default=128000)
+    description = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
