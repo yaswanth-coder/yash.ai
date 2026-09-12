@@ -2,26 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isAuthenticated } from "@/services/auth";
 
 /**
  * useAuthGuard — redirects unauthenticated users to /login.
- * Returns `ready` (boolean) immediately on client if token exists,
- * avoiding layout flicker and double-hop render delays.
+ *
+ * - Returns `ready = true` immediately if a token exists in localStorage,
+ *   avoiding layout flicker and double-hop render delays.
+ * - The user is NEVER logged out automatically by this guard.
+ *   Logout only happens when the user clicks "Sign Out".
  */
 export function useAuthGuard(): boolean {
-  const [ready, setReady] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !!localStorage.getItem("yash_ai_token");
-    }
-    return false;
-  });
+  const [ready, setReady] = useState<boolean>(() => isAuthenticated());
   const router = useRouter();
 
   useEffect(() => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("yash_ai_token") : null;
-
-    if (!token) {
+    if (!isAuthenticated()) {
       router.replace("/login");
     } else {
       setReady(true);

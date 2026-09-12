@@ -159,7 +159,7 @@ AI_PROVIDER_PRIORITY=gemini,nvidia,groq,anthropic,openai,ollama
 ```bash
 cd apps/backend
 pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn app.main:app --host 0.0.0.1 --port 8000 --reload
 ```
 
 > 📖 **Swagger API Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)

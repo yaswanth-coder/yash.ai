@@ -23,15 +23,12 @@ api.interceptors.request.use(
   }
 );
 
+// NOTE: We do NOT auto-logout on 401 here.
+// Users are only logged out when they explicitly click "Sign Out".
+// Individual pages handle 401 gracefully without wiping stored credentials.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("yash_ai_token");
-      localStorage.removeItem("yash_ai_user");
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;
