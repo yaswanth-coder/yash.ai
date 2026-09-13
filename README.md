@@ -10,7 +10,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org)
 [![Gemini](https://img.shields.io/badge/Gemini-3.6%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
-[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-NIM%20API-76B900?style=flat-square&logo=nvidia&logoColor=white)](https://build.nvidia.com)
+[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-NIM%20API-76B900?style=flat-square&logo=nvidia&logoColor=white)](https://build.nvidia.com)x
 [![Mobile Ready](https://img.shields.io/badge/Mobile-iOS%20%26%20Android-purple?style=flat-square&logo=android&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)

@@ -4,217 +4,190 @@ import React from "react";
 import Link from "next/link";
 import {
   Sparkles,
-  Palette,
+  ImageIcon,
   Video,
   Box,
   Code2,
   Music,
   FileText,
-  Compass,
-  ArrowRight,
-  FolderKanban,
-  Zap,
+  Search,
+  Pen,
 } from "lucide-react";
 import MobileNav from "@/components/MobileNav";
 
-interface StudioCard {
-  id: string;
-  name: string;
-  badge: string;
-  category: string;
-  description: string;
-  icon: any;
-  href: string;
-  gradient: string;
-  features: string[];
-}
-
-const studios: StudioCard[] = [
+const studios = [
   {
     id: "image",
     name: "Image Studio",
-    badge: "Visual AI",
-    category: "Generative",
-    description: "Multi-provider text-to-image synthesis, variation, style transfers, and canvas editing.",
-    icon: Palette,
+    description: "AI image generation and editing",
+    icon: ImageIcon,
     href: "/create/image",
-    gradient: "from-blue-600/20 via-indigo-600/10 to-transparent",
-    features: ["Text-to-Image", "Image-to-Image", "Upscaling", "Style Controls"],
+    // purple gradient — top-right bright, fades bottom-left
+    gradient: "radial-gradient(ellipse at 85% 15%, #9333ea 0%, #6d28d9 30%, #1e1b4b 65%, #0a0a0f 100%)",
+    iconBg: "bg-purple-500/20",
+    iconColor: "text-purple-300",
   },
   {
     id: "video",
     name: "Video Studio",
-    badge: "Motion AI",
-    category: "Generative",
-    description: "Timeline-based asynchronous AI video generation, storyboarding, and scene synthesis.",
+    description: "Create, edit, and animate professional videos",
     icon: Video,
     href: "/create/video",
-    gradient: "from-purple-600/20 via-pink-600/10 to-transparent",
-    features: ["Text-to-Video", "Storyboarding", "Async Jobs", "Scene Timeline"],
-  },
-  {
-    id: "design",
-    name: "Visual Canvas",
-    badge: "Infinite Canvas",
-    category: "Design",
-    description: "Infinite collaborative workspace with shapes, connectors, sticky notes, and AI canvas commands.",
-    icon: Sparkles,
-    href: "/create/design",
-    gradient: "from-emerald-600/20 via-teal-600/10 to-transparent",
-    features: ["Infinite Pan & Zoom", "AI Canvas Tools", "Connectors", "Grouping"],
-  },
-  {
-    id: "3d",
-    name: "3D Studio",
-    badge: "Spatial Engine",
-    category: "3D & VR",
-    description: "Interactive Three.js viewport, primitive modeling, materials, scene tree, and GLTF/GLB export.",
-    icon: Box,
-    href: "/create/3d",
-    gradient: "from-amber-600/20 via-orange-600/10 to-transparent",
-    features: ["3D Viewport", "AI Primitives", "Materials & Lighting", "GLTF Export"],
+    // pink/red gradient
+    gradient: "radial-gradient(ellipse at 75% 20%, #f43f5e 0%, #be185d 30%, #4c0519 65%, #0a0a0f 100%)",
+    iconBg: "bg-rose-500/20",
+    iconColor: "text-rose-300",
   },
   {
     id: "code",
     name: "Code Studio",
-    badge: "Development",
-    category: "Coding",
-    description: "Safe sandbox runner, Monaco-style editor, Git preview, and intelligent AI pair programmer.",
+    description: "Write, test, and deploy code with AI",
     icon: Code2,
     href: "/create/code",
-    gradient: "from-cyan-600/20 via-blue-600/10 to-transparent",
-    features: ["AST-Validated Sandbox", "Syntax Highlighting", "Live Preview", "Diffs"],
+    // green/teal gradient
+    gradient: "radial-gradient(ellipse at 80% 20%, #10b981 0%, #059669 30%, #064e3b 65%, #0a0a0f 100%)",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-300",
+  },
+  {
+    id: "3d",
+    name: "3D Studio",
+    description: "Model, texture, and render 3D scenes and assets",
+    icon: Box,
+    href: "/create/3d",
+    // orange gradient
+    gradient: "radial-gradient(ellipse at 80% 20%, #f97316 0%, #ea580c 30%, #431407 65%, #0a0a0f 100%)",
+    iconBg: "bg-orange-500/20",
+    iconColor: "text-orange-300",
   },
   {
     id: "audio",
     name: "Audio Studio",
-    badge: "Voice & Speech",
-    category: "Audio",
-    description: "Speech-to-text transcription, AI text-to-speech, waveform visualizer, and voice pipelines.",
+    description: "Generate, process, and mix audio tracks",
     icon: Music,
     href: "/create/audio",
-    gradient: "from-rose-600/20 via-red-600/10 to-transparent",
-    features: ["Text-to-Speech", "Audio Waveforms", "Transcription", "Voice Modes"],
-  },
-  {
-    id: "documents",
-    name: "Document Studio",
-    badge: "Productivity",
-    category: "Documents",
-    description: "Distraction-free rich text & markdown workspace with AI summarization and report generation.",
-    icon: FileText,
-    href: "/create/documents",
-    gradient: "from-indigo-600/20 via-blue-600/10 to-transparent",
-    features: ["Markdown & WYSIWYG", "AI Summarizer", "Citation Support", "Export to PDF"],
+    // cyan/teal gradient
+    gradient: "radial-gradient(ellipse at 20% 20%, #06b6d4 0%, #0891b2 25%, #155e75 55%, #0a0a0f 100%)",
+    iconBg: "bg-cyan-500/20",
+    iconColor: "text-cyan-300",
   },
   {
     id: "research",
-    name: "Research Studio",
-    badge: "Intelligence",
-    category: "Research",
-    description: "Multi-source deep web investigation, fact checking, citation validation, and synthesis reports.",
-    icon: Compass,
+    name: "Deep Research",
+    description: "Comprehensive AI-driven data synthesis & analysis",
+    icon: Search,
     href: "/create/research",
-    gradient: "from-violet-600/20 via-indigo-600/10 to-transparent",
-    features: ["Live Web Search", "Fact Verification", "Source Attribution", "Deep Synthesis"],
+    // blue/indigo gradient
+    gradient: "radial-gradient(ellipse at 40% 30%, #3b82f6 0%, #1d4ed8 30%, #1e1b4b 60%, #0a0a0f 100%)",
+    iconBg: "bg-blue-500/20",
+    iconColor: "text-blue-300",
+  },
+  {
+    id: "design",
+    name: "Design Canvas",
+    description: "Vector art, UI/UX design, and digital artwork",
+    icon: Pen,
+    href: "/create/design",
+    // purple/indigo
+    gradient: "radial-gradient(ellipse at 60% 25%, #8b5cf6 0%, #6d28d9 30%, #2e1065 60%, #0a0a0f 100%)",
+    iconBg: "bg-violet-500/20",
+    iconColor: "text-violet-300",
+  },
+  {
+    id: "documents",
+    name: "Doc Synthesis",
+    description: "Analyze, summarize, and generate dynamic documents",
+    icon: FileText,
+    href: "/create/documents",
+    // yellow/gold gradient
+    gradient: "radial-gradient(ellipse at 80% 20%, #eab308 0%, #ca8a04 30%, #713f12 60%, #0a0a0f 100%)",
+    iconBg: "bg-yellow-500/20",
+    iconColor: "text-yellow-300",
   },
 ];
 
 export default function CreateHubPage() {
   return (
-    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
-      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4 sm:pb-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Yash.AI Creation Suite
-              </span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-xs text-zinc-400">8 Workspaces Available</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5 sm:gap-3">
-              <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400 shrink-0" />
-              <span>Creative Workspaces</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl">
-              Launch specialized creative studios for images, video, 3D, canvas, code, audio, documents, and research.
-              Every creation automatically synchronizes with your universal projects and cloud assets.
-            </p>
+    <div
+      className="min-h-screen text-white font-sans flex flex-col pb-20 md:pb-0"
+      style={{ background: "#0a0a0f" }}
+    >
+      {/* Top Navigation Bar */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Link
-              href="/projects"
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition-colors shrink-0"
-            >
-              <FolderKanban className="w-4 h-4 text-blue-400" />
-              <span>View Projects</span>
-            </Link>
-          </div>
+          <span className="text-base font-bold text-white">Create Studio</span>
         </div>
 
-        {/* Studio Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
+          <span className="text-white font-semibold border-b border-white pb-0.5">Dashboard</span>
+          <Link href="/projects" className="hover:text-white transition-colors">Projects</Link>
+          <Link href="/agents" className="hover:text-white transition-colors">Team</Link>
+          <Link href="/settings" className="hover:text-white transition-colors">Settings</Link>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <button className="relative w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          </button>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-xs font-bold text-white select-none">
+            YA
+          </div>
+        </div>
+      </header>
+
+      {/* Card Grid */}
+      <main className="flex-1 p-4 sm:p-6 md:p-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
           {studios.map((studio) => {
             const Icon = studio.icon;
             return (
-              <div
+              <Link
                 key={studio.id}
-                className="group relative flex flex-col justify-between p-5 rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                href={studio.href}
+                className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl cursor-pointer"
+                style={{
+                  background: studio.gradient,
+                  minHeight: "200px",
+                }}
               >
-                {/* Gradient glow background */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-b ${studio.gradient} opacity-40 group-hover:opacity-80 transition-opacity pointer-events-none`}
-                />
+                {/* Subtle dark overlay for text readability */}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-2xl" />
 
-                <div className="relative space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800">
-                      {studio.badge}
-                    </span>
+                <div className="relative z-10 flex flex-col h-full gap-3">
+                  {/* Icon */}
+                  <div
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${studio.iconBg} backdrop-blur-sm flex items-center justify-center border border-white/10`}
+                  >
+                    <Icon className={`w-5 h-5 ${studio.iconColor}`} />
                   </div>
 
-                  <div>
-                    <h2 className="text-base font-bold text-zinc-100 group-hover:text-white transition-colors">
+                  {/* Title + Description */}
+                  <div className="flex-1">
+                    <h2 className="text-base sm:text-lg font-bold text-white leading-tight">
                       {studio.name}
                     </h2>
-                    <p className="text-xs text-zinc-400 mt-1 line-clamp-3 leading-relaxed">
+                    <p className="text-xs sm:text-[13px] text-white/60 mt-1 leading-relaxed line-clamp-3">
                       {studio.description}
                     </p>
                   </div>
 
-                  {/* Feature tags */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {studio.features.map((feat) => (
-                      <span
-                        key={feat}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-900/90 text-zinc-400 border border-zinc-800/60"
-                      >
-                        {feat}
-                      </span>
-                    ))}
-                  </div>
+                  {/* Get Started Button */}
+                  <button className="w-full py-2 px-4 rounded-xl bg-black/30 hover:bg-black/50 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white text-xs sm:text-sm font-semibold transition-all text-center">
+                    Get Started
+                  </button>
                 </div>
-
-                <div className="relative pt-6">
-                  <Link
-                    href={studio.href}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-blue-600 text-zinc-200 hover:text-white text-xs font-semibold border border-zinc-800 hover:border-blue-500 transition-all shadow-sm group-hover:shadow-md"
-                  >
-                    <span>Launch Studio</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
-              </div>
+              </Link>
             );
           })}
         </div>
-      </div>
+      </main>
+
       <MobileNav />
     </div>
   );
