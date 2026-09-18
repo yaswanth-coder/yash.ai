@@ -48,19 +48,37 @@ class ImageGenerationService:
         if negative_prompt and negative_prompt.strip():
             augmented_prompt += f" --no {negative_prompt.strip()}"
 
-        # 3. Generate image bytes via provider chain
+        # 3. Generate image bytes via image_router with Pollinations fallback
         image_bytes = None
         used_provider = provider or "pollinations"
         used_model = model or "flux"
 
-        # Try Pollinations / fallback directly for instant reliability
-        image_bytes, used_provider, used_model = await self._generate_pollinations(
-            prompt=augmented_prompt,
-            width=width,
-            height=height,
-            seed=seed,
-            model=used_model
-        )
+        try:
+            from app.services.image.router import image_router
+            from app.services.image.base import ImageGenerationTask
+            task = ImageGenerationTask(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                aspect_ratio=aspect_ratio,
+                style=style,
+                seed=seed,
+                num_images=1,
+                model=model or (f"{provider}:{model}" if provider else None)
+            )
+            results = await image_router.generate(task)
+            if results:
+                image_bytes = results[0].image_bytes
+                used_provider = results[0].provider
+                used_model = results[0].model
+        except Exception as e:
+            logger.warning(f"ImageProviderRouter generation failed: {e}. Falling back to native Pollinations.")
+            image_bytes, used_provider, used_model = await self._generate_pollinations(
+                prompt=augmented_prompt,
+                width=width,
+                height=height,
+                seed=seed,
+                model=used_model
+            )
 
         if not image_bytes:
             raise RuntimeError("Failed to generate image from providers.")
@@ -69,13 +87,13 @@ class ImageGenerationService:
         timestamp_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"gen_{timestamp_str}_{width}x{height}.png"
         content_type = "image/png"
+        storage_key = f"projects/{project_id}/assets/{filename}"
 
-        upload_result = await self.storage.upload(
-            file_data=image_bytes,
-            filename=filename,
-            content_type=content_type,
-            project_id=project_id,
-            user_id=user_id
+        import io
+        download_url = await self.storage.upload(
+            file_obj=io.BytesIO(image_bytes),
+            storage_key=storage_key,
+            content_type=content_type
         )
 
         # 5. Persist AssetModel in MongoDB
@@ -86,8 +104,8 @@ class ImageGenerationService:
             project_id=project_id,
             asset_type="IMAGE",
             name=f"Image: {title_summary}",
-            storage_key=upload_result["storage_key"],
-            url=upload_result["download_url"],
+            storage_key=storage_key,
+            url=download_url,
             mime_type=content_type,
             size_bytes=len(image_bytes),
             provider=used_provider,

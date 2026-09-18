@@ -140,6 +140,68 @@ class ToolRegistry:
         for t in THREE_D_TOOLS:
             self.register(t)
 
+        # 8. AI Image Studio Generation Tool
+        async def _exec_image_generate(prompt: str, style: str = "Photorealistic", aspect_ratio: str = "1:1", **kwargs):
+            from app.services.image.router import image_router
+            from app.services.image.base import ImageGenerationTask
+            from app.services.storage.factory import get_storage_provider
+            import datetime
+
+            task = ImageGenerationTask(
+                prompt=prompt,
+                style=style,
+                aspect_ratio=aspect_ratio,
+                num_images=1
+            )
+            imgs = await image_router.generate(task)
+            if not imgs:
+                return {"error": "Failed to synthesize image."}
+
+            storage = get_storage_provider()
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"chat_img_{timestamp}.png"
+            storage_key = f"projects/chat/assets/{filename}"
+            import io
+            download_url = await storage.upload(
+                file_obj=io.BytesIO(imgs[0].image_bytes),
+                storage_key=storage_key,
+                content_type="image/png"
+            )
+            return {
+                "image_url": download_url,
+                "provider": imgs[0].provider,
+                "model": imgs[0].model,
+                "prompt": prompt,
+                "style": style
+            }
+
+        self.register(ToolDefinition(
+            id="image.generate",
+            name="AI Image Generation",
+            description="Generate photorealistic or stylized AI imagery using Flux, DALL-E 3, or Gemini Imagen.",
+            category="creative",
+            permission_tier=PermissionTier.EXECUTE,
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string", "description": "The visual description of what to generate"},
+                    "style": {"type": "string", "description": "Artistic style (Photorealistic, Cinematic, Anime, 3D Render, etc.)"},
+                    "aspect_ratio": {"type": "string", "description": "Image aspect ratio like 1:1, 16:9, 9:16"}
+                },
+                "required": ["prompt"]
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "image_url": {"type": "string"},
+                    "provider": {"type": "string"},
+                    "model": {"type": "string"}
+                }
+            },
+            requires_confirmation=False,
+            handler=_exec_image_generate
+        ))
+
 
 _global_tool_registry = ToolRegistry()
 

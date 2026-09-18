@@ -283,10 +283,7 @@ html {
 
 /* GPU Accelerated Smooth Animation Containers */
 .gpu-smooth {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  will-change: transform, opacity;
+  -webkit-overflow-scrolling: touch;
 }
 
 .message-item-smooth {

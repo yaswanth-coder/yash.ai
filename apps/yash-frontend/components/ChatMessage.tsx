@@ -24,9 +24,14 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  Play,
+  Maximize2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { submitMessageFeedback } from "@/services/feedback";
 import dynamic from "next/dynamic";
+import { createPortal } from "react-dom";
 
 const CanvasStudio = dynamic(() => import("./CanvasStudio"), { ssr: false });
 
@@ -70,8 +75,10 @@ export default function ChatMessage({
   const [canvasCode, setCanvasCode] = useState<{ code: string; lang: string } | null>(null);
   const [useSerif, setUseSerif] = useState(true);
   const [showThinking, setShowThinking] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("yash_ai_font");
       if (saved) {
@@ -550,16 +557,113 @@ export default function ChatMessage({
         </div>
       </div>
 
-      {/* Canvas Studio Modal */}
-      {canvasCode && (
+      {/* Canvas Studio Modal rendered via Portal directly into document.body to avoid parent CSS transform trapping */}
+      {mounted && canvasCode && createPortal(
         <CanvasStudio
           initialCode={canvasCode.code}
           language={canvasCode.lang}
           onClose={() => setCanvasCode(null)}
-        />
+        />,
+        document.body
       )}
     </>
   );
+}
+
+function buildInlinePreviewHtml(src: string, lang: string) {
+  const l = (lang || "").toLowerCase().trim();
+
+  const consoleBridge = `
+    <script>
+      (function() {
+        function post(level, ...args) {
+          try {
+            const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+            window.parent.postMessage({ type: 'INLINE_CONSOLE', level, text }, '*');
+          } catch (_) {}
+        }
+        const _log = console.log, _err = console.error;
+        console.log = function(...a) { _log.apply(console, a); post('info', ...a); };
+        console.error = function(...a) { _err.apply(console, a); post('error', ...a); };
+        window.addEventListener('error', function(e) { post('error', e.message); });
+      })();
+    </script>
+  `;
+
+  if (["html", "htm", "xhtml", "xml"].includes(l)) {
+    if (/<!doctype/i.test(src) || /<html/i.test(src)) {
+      if (/<head[^>]*>/i.test(src)) {
+        return src.replace(/<head[^>]*>/i, `$&${consoleBridge}`);
+      }
+      return `${consoleBridge}${src}`;
+    }
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${consoleBridge}
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #ffffff;
+      color: #18181b;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  ${src}
+</body>
+</html>`;
+  }
+
+  if (l === "svg") {
+    return `<!DOCTYPE html><html><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#09090b;padding:16px;">${consoleBridge}${src}</body></html>`;
+  }
+
+  if (["javascript", "js"].includes(l)) {
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 14px; font-family: ui-monospace, monospace; background: #0c0d14; color: #f4f4f5; font-size: 12px; }
+    #console-out { white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+    .log-p { color: #60a5fa; margin-bottom: 3px; }
+    .err-p { color: #f87171; margin-bottom: 3px; }
+  </style>
+</head>
+<body>
+  <div id="console-out"></div>
+  <script>
+    const _c = document.getElementById('console-out');
+    function add(cls, text) {
+      const d = document.createElement('div');
+      d.className = cls;
+      d.textContent = text;
+      _c.appendChild(d);
+    }
+    console.log = (...args) => add('log-p', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+    console.error = (...args) => add('err-p', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+    window.addEventListener('error', (e) => add('err-p', 'Runtime Error: ' + e.message));
+  </script>
+  <script type="module">
+    try {
+      ${src}
+    } catch(err) {
+      console.error(err);
+    }
+  </script>
+</body>
+</html>`;
+  }
+
+  return src;
 }
 
 function CodeBlock({
@@ -572,6 +676,11 @@ function CodeBlock({
   onOpenCanvas?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const langLower = (language || "").toLowerCase().trim();
+  const isRunnable = ["html", "htm", "xhtml", "svg", "javascript", "js", "xml"].includes(langLower);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -580,7 +689,8 @@ function CodeBlock({
   };
 
   return (
-    <div className="my-4 rounded-xl overflow-hidden border shadow-lg"
+    <div
+      className="my-4 rounded-xl overflow-hidden border shadow-lg"
       style={{
         background: "rgba(8, 8, 18, 0.80)",
         backdropFilter: "blur(20px) saturate(180%)",
@@ -591,7 +701,7 @@ function CodeBlock({
     >
       {/* Code block header */}
       <div
-        className="flex items-center justify-between px-4 py-2 text-xs text-zinc-400 font-mono"
+        className="flex items-center justify-between px-3 sm:px-4 py-2 text-xs text-zinc-400 font-mono flex-wrap gap-2"
         style={{
           background: "rgba(255,255,255,0.03)",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -605,21 +715,52 @@ function CodeBlock({
           </div>
           <span className="text-blue-400 font-semibold uppercase text-[11px] ml-1">{language}</span>
         </div>
+
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Direct Run / Live Preview button */}
+          {isRunnable && (
+            <button
+              type="button"
+              onClick={() => setShowPreview((v) => !v)}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-lg transition-all text-[11px] font-semibold cursor-pointer shadow-sm ${
+                showPreview
+                  ? "bg-emerald-600/30 text-emerald-300 border border-emerald-500/40"
+                  : "bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30"
+              }`}
+              title={showPreview ? "Close Sandbox Preview" : "Run code in interactive sandbox"}
+            >
+              {showPreview ? (
+                <>
+                  <EyeOff className="w-3 h-3" />
+                  <span>Hide Preview</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3 h-3 fill-current" />
+                  <span>Run Code</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Full-screen Canvas Studio button */}
           {onOpenCanvas && (
             <button
+              type="button"
               onClick={onOpenCanvas}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-[11px] font-semibold"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-[11px] font-semibold cursor-pointer"
               title="Open in Interactive Canvas Studio"
             >
               <Monitor className="w-3 h-3" />
               <span className="hidden sm:inline">Open in Canvas</span>
+              <span className="sm:hidden">Canvas</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
           >
             {copied ? (
               <>
@@ -637,9 +778,51 @@ function CodeBlock({
         </div>
       </div>
 
+      {/* Code Text */}
       <pre className="p-3 sm:p-4 overflow-x-auto font-mono text-[11px] sm:text-xs text-zinc-200 leading-relaxed custom-scrollbar max-w-full">
         <code>{value}</code>
       </pre>
+
+      {/* Inline Interactive Live Sandbox */}
+      {showPreview && (
+        <div className="border-t border-zinc-800/80 bg-white flex flex-col animate-fadeIn">
+          <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#0e0f17] border-b border-zinc-800 text-[11px] text-zinc-400">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-semibold text-zinc-200">Interactive Sandbox Output</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setReloadKey((k) => k + 1)}
+                className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                title="Restart code execution"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span className="text-[10px]">Restart</span>
+              </button>
+              {onOpenCanvas && (
+                <button
+                  type="button"
+                  onClick={onOpenCanvas}
+                  className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors font-semibold text-[10px] cursor-pointer"
+                  title="Expand to full-screen Canvas Studio"
+                >
+                  <Maximize2 className="w-3 h-3" />
+                  <span>Expand Studio</span>
+                </button>
+              )}
+            </div>
+          </div>
+          <iframe
+            key={reloadKey}
+            srcDoc={buildInlinePreviewHtml(value, langLower)}
+            className="w-full h-80 border-0 bg-white"
+            sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
+            title="Inline Interactive Preview"
+          />
+        </div>
+      )}
     </div>
   );
 }
