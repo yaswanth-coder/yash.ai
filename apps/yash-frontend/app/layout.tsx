@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PwaProvider } from "@/context/PwaContext";
+import InstallPrompt from "@/components/InstallPrompt";
+import IosInstallModal from "@/components/IosInstallModal";
 
 export const viewport: Viewport = {
   themeColor: "#0f172a",
@@ -42,7 +45,13 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans select-none sm:select-auto" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col font-sans select-none sm:select-auto" suppressHydrationWarning>
+        <PwaProvider>
+          {children}
+          <InstallPrompt />
+          <IosInstallModal />
+        </PwaProvider>
+      </body>
     </html>
   );
 }

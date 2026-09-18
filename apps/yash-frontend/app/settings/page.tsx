@@ -20,7 +20,9 @@ import {
   Key,
   Sparkles,
   X,
+  Smartphone,
 } from "lucide-react";
+import { usePwaInstall } from "@/context/PwaContext";
 import {
   fetchProviders,
   ProvidersResponse,
@@ -50,6 +52,7 @@ export default function SettingsPage() {
   const [localOnly, setLocalOnly] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const { isInstalled, isInstallable, isIOS, promptInstall } = usePwaInstall();
 
   const router = useRouter();
 
@@ -525,6 +528,57 @@ export default function SettingsPage() {
                 )}
                 <span>{trainingFeedback.text}</span>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Application Installation & PWA */}
+        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-indigo-400" />
+                App Installation & PWA
+              </h2>
+              <p className="text-[11px] text-zinc-500">
+                Install Yash.AI on your phone, tablet, or computer for a full-screen native app experience.
+              </p>
+            </div>
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                isInstalled
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "bg-indigo-500/10 border-indigo-500/30 text-indigo-300"
+              }`}
+            >
+              {isInstalled ? "Installed (Standalone)" : isInstallable ? "Ready to Install" : "Web Mode"}
+            </span>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold text-zinc-200">
+                {isInstalled
+                  ? "Application Active"
+                  : isIOS
+                  ? "Add to iPhone / iPad Home Screen"
+                  : "Install on this Device"}
+              </p>
+              <p className="text-[11px] text-zinc-500">
+                {isInstalled
+                  ? "You are currently running Yash.AI in standalone application mode."
+                  : "Enjoy instant launch, offline app shell, and zero browser toolbar distraction."}
+              </p>
+            </div>
+
+            {!isInstalled && (
+              <button
+                onClick={promptInstall}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-500/20 transition-all shrink-0 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>{isIOS ? "How to Install (iOS)" : "Install Yash.AI App"}</span>
+              </button>
             )}
           </div>
         </div>

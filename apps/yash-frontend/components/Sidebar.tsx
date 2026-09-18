@@ -35,9 +35,11 @@ import {
   FileText,
   Compass,
   Wrench,
+  Download,
 } from "lucide-react";
 import { ConversationItem } from "@/services/conversations";
 import { User } from "@/services/auth";
+import { usePwaInstall } from "@/context/PwaContext";
 
 interface SidebarProps {
   conversations: ConversationItem[];
@@ -78,6 +80,7 @@ export default function Sidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { isInstalled, isInstallable, promptInstall } = usePwaInstall();
 
   const filteredConvs = useMemo(() => {
     if (!searchQuery.trim()) return conversations;
@@ -538,6 +541,35 @@ export default function Sidebar({
 
         {/* Footer */}
         <div className="space-y-1">
+          {!isCollapsed && !isInstalled && (
+            <button
+              onClick={() => {
+                promptInstall();
+                if (isOpenMobile) onCloseMobile?.();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-indigo-300 hover:text-white transition-all group"
+              style={{
+                background: "linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(59, 130, 246, 0.08))",
+                border: "1px solid rgba(99, 102, 241, 0.22)",
+              }}
+            >
+              <Download className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+              <span>Install Yash.AI App</span>
+            </button>
+          )}
+
+          {isCollapsed && !isInstalled && (
+            <div className="flex justify-center py-1">
+              <button
+                onClick={() => promptInstall()}
+                className="p-2.5 rounded-xl text-indigo-400 hover:text-white transition-all hover:bg-indigo-500/10"
+                title="Install Yash.AI App"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {!isCollapsed && (
             <Link
               href="/settings"
