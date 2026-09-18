@@ -10,7 +10,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org)
 [![Gemini](https://img.shields.io/badge/Gemini-3.6%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
-[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-NIM%20API-76B900?style=flat-square&logo=nvidia&logoColor=white)](https://build.nvidia.com)x
+[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-NIM%20API-76B900?style=flat-square&logo=nvidia&logoColor=white)](https://build.nvidia.com)
 [![Mobile Ready](https://img.shields.io/badge/Mobile-iOS%20%26%20Android-purple?style=flat-square&logo=android&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
@@ -31,7 +31,15 @@
 
 ---
 
-### 🎨 Create Studio
+### 🎨 AI Image Studio (Google Gemini AI Engine)
+
+![Yash.AI Gemini Image Studio](docs/screenshots/image-studio-gemini.png)
+
+*Professional AI Image Studio with Google Gemini AI default engine, prompt decomposition, interactive inpainting mask editor, outpainting, 4-way variations, and 4x super-resolution.*
+
+---
+
+### 🎨 Create Studio Suite
 
 ![Yash.AI Create Studio](docs/screenshots/create-studio.jpg)
 
@@ -47,13 +55,15 @@
 
 ---
 
-### 📱 Mobile App (iOS / Android)
+### 📲 Mobile App & PWA Installation (iOS / Android)
 
 <div align="center">
 <img src="docs/screenshots/mobile-view.jpg" alt="Yash.AI Mobile App" width="320" />
+&nbsp;&nbsp;&nbsp;&nbsp;
+<img src="docs/screenshots/app-install-modal.png" alt="Yash.AI PWA Installation" width="320" />
 </div>
 
-*Native-feel mobile experience with bottom navigation, safe-area insets, and PWA installability.*
+*Native-feel mobile experience with bottom navigation, safe-area insets, and 1-click PWA home-screen installation.*
 
 ---
 
