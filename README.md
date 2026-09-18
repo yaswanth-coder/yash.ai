@@ -76,7 +76,7 @@
 
 | Workspace | Route | Capabilities |
 | :--- | :--- | :--- |
-| 🖼️ **Image Studio** | `/create/image` | Multi-aspect ratio text-to-image, style presets (Cinematic, Anime, Cyberpunk, 3D Render) |
+| 🖼️ **Image Studio** | `/create/image` | Powered by **Google Gemini AI** & Flux: text-to-image, interactive inpainting mask editor, outpaint canvas expander, prompt intelligence & visual decomposition, 4-way variations, 4x super-resolution, and format export (PNG, JPEG, WebP) |
 | 🎬 **Video Studio** | `/create/video` | AI video generation, prompt-to-motion synthesis, aspect ratios (16:9, 9:16) |
 | ✨ **Design Canvas** | `/create/design` | Interactive infinite canvas, visual node layouts, wireframing |
 | 📦 **3D Studio** | `/create/3d` | Text-to-3D asset generation, mesh preview, `.obj`/`.gltf` export |
@@ -312,6 +312,16 @@ docker compose up --build
 - `GET /memory/` — List stored user memory and context.
 - `POST /memory/train` — Run one-time history training.
 
+### 🎨 AI Image Studio (`/images`)
+- `GET /images/models` — Aggregated capabilities and live models (Gemini AI, Flux, DALL-E, SDXL).
+- `POST /images/generate` — Synthesize high-resolution images with prompt, aspect ratio, style, and seed.
+- `POST /images/edit` — Inpainting mask editor and seamless object replacement.
+- `POST /images/outpaint` — Expand canvas boundaries in any direction (left, right, top, bottom, all).
+- `POST /images/variations` — Synthesize 4-way visual variations of generated artwork.
+- `POST /images/upscale` — 2x / 4x super-resolution enlargement.
+- `POST /images/prompt/enhance` — Visual prompt intelligence and 6-factor composition decomposition.
+- `GET /images/history` — Retrieve user artwork library and metadata.
+
 ### 🤖 Providers
 - `GET /providers/models` — List all available models across providers.
 - `GET /providers/health` — Real-time health status of all providers.
@@ -322,11 +332,12 @@ docker compose up --build
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4, Lucide Icons |
-| **Mobile / PWA** | Responsive CSS (`dvh`, safe-area insets), MobileNav component, Capacitor |
-| **Backend API** | FastAPI, Uvicorn, Pydantic v2, Python-Jose (JWT), BCrypt |
-| **AI Providers** | Google GenAI SDK, NVIDIA NIM, Ollama, Groq SDK, OpenAI SDK, httpx (Anthropic) |
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Lucide Icons |
+| **Mobile / PWA** | Service Worker API, Cache API, Web App Manifest, Responsive CSS (`dvh`, safe-area insets), MobileNav |
+| **Backend API** | FastAPI, Uvicorn, Pydantic v2, Python-Jose (JWT), BCrypt, Pillow / PIL |
+| **AI Providers** | Google GenAI SDK (Gemini 3.6 Flash & Imagen 3), NVIDIA NIM, Ollama, Groq SDK, OpenAI SDK, Anthropic |
 | **Database** | MongoDB Motor (async) + SQLite fallback |
+| **One-Click Launchers** | Windows Batch (`start.bat`, `install.bat`), POSIX Bash (`start.sh`, `install.sh`) |
 | **DevOps** | Docker, Docker Compose, multi-stage Alpine builds |
 
 ---
