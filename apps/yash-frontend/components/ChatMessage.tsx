@@ -172,8 +172,8 @@ export default function ChatMessage({
           <div
             className={`relative group rounded-2xl px-3.5 sm:px-5 py-3 sm:py-4 shadow-xs text-xs sm:text-sm leading-relaxed transition-all min-w-0 ${
               isUser
-                ? "text-white rounded-tr-xs max-w-[88%] sm:max-w-[80%] break-words"
-                : "text-zinc-100 rounded-tl-xs flex-1 max-w-full overflow-hidden"
+                ? "text-white rounded-tr-xs max-w-[88%] sm:max-w-[80%] break-words break-anywhere"
+                : "text-zinc-100 rounded-tl-xs flex-1 max-w-full overflow-hidden break-anywhere"
             }`}
             style={isUser ? {
               background: "linear-gradient(135deg, rgba(59,130,246,0.85), rgba(79,70,229,0.80))",
@@ -246,7 +246,7 @@ export default function ChatMessage({
                   </div>
                 </form>
               ) : (
-                <div className="whitespace-pre-wrap font-sans text-white leading-relaxed">{content}</div>
+                <div className="whitespace-pre-wrap font-sans text-white leading-relaxed break-anywhere">{content}</div>
               )
             ) : (
               <div
@@ -459,7 +459,7 @@ export default function ChatMessage({
                 {isUser && onEditMessage && !isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-blue-700 text-white/80 hover:text-white transition-opacity"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-md hover:bg-blue-700 text-white/80 hover:text-white transition-opacity"
                     title="Edit message & resubmit"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
@@ -529,7 +529,7 @@ export default function ChatMessage({
                 {/* Copy Message */}
                 <button
                   onClick={handleCopyMessage}
-                  className="flex items-center gap-1 hover:text-white px-2 py-1 rounded-md bg-zinc-800/60 hover:bg-zinc-800 transition-all ml-1 text-zinc-400"
+                  className="flex items-center gap-1 hover:text-white px-2 py-1.5 rounded-md bg-zinc-800/60 hover:bg-zinc-800 transition-all ml-1 text-zinc-400 cursor-pointer"
                   title="Copy full message"
                 >
                   {copiedMessage ? (

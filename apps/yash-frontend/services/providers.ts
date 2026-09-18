@@ -14,6 +14,7 @@ export interface ProviderItem {
   is_configured: boolean;
   status: string;
   latency_ms?: number;
+  model_count?: number;
 }
 
 export interface ProvidersResponse {

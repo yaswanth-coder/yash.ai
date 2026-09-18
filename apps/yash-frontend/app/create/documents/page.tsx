@@ -13,6 +13,8 @@ import {
   Check,
 } from "lucide-react";
 
+import MobileNav from "@/components/MobileNav";
+
 export default function DocumentsStudioPage() {
   const [content, setContent] = useState(`# Yash.AI Project Specification
 
@@ -52,77 +54,77 @@ Yash.AI is a unified AI creation platform integrating multi-provider conversatio
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans pb-24 lg:pb-0">
       {/* Studio Header */}
-      <header className="h-14 border-b border-zinc-800/80 px-6 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="h-14 border-b border-zinc-800/80 px-3.5 sm:px-6 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link
             href="/create"
-            className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
               <FileText className="w-4 h-4" />
             </div>
-            <span className="font-bold text-sm text-zinc-100">Yash.AI Docs Studio</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
+            <span className="font-bold text-xs sm:text-sm text-zinc-100 truncate">Docs Studio</span>
+            <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold shrink-0">
               Markdown & Docs
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={handleAiSummarize}
             disabled={summarizing}
-            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[11px] sm:text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all cursor-pointer touch-target"
           >
             <Wand2 className="w-3.5 h-3.5" />
-            <span>{summarizing ? "Summarizing..." : "AI Summarize"}</span>
+            <span>{summarizing ? "Summarizing..." : "Summarize"}</span>
           </button>
           <button
             onClick={handleCopy}
-            className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 transition-colors"
+            className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 transition-colors touch-target"
             title="Copy Markdown"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition-colors"
+            className="flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] sm:text-xs font-semibold text-zinc-200 transition-colors touch-target"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export MD</span>
+            <span className="hidden sm:inline">Export MD</span>
           </button>
         </div>
       </header>
 
       {/* Editor & Preview Split View */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 overflow-y-auto lg:overflow-hidden">
         {/* Editor Area */}
-        <div className="border-r border-zinc-800/80 p-6 flex flex-col bg-zinc-950">
+        <div className="border-b lg:border-b-0 lg:border-r border-zinc-800/80 p-4 sm:p-6 flex flex-col bg-zinc-950 min-h-[320px] lg:min-h-0">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 w-full bg-transparent font-mono text-xs text-zinc-200 resize-none focus:outline-none leading-relaxed"
+            className="flex-1 w-full bg-transparent font-mono text-sm sm:text-xs text-zinc-200 resize-none focus:outline-none leading-relaxed"
             placeholder="Type your markdown document..."
           />
         </div>
 
         {/* Live Preview Area */}
-        <div className="p-8 bg-black overflow-y-auto prose prose-invert prose-zinc max-w-none text-xs">
-          <div className="max-w-2xl mx-auto space-y-4 text-zinc-300">
+        <div className="p-4 sm:p-8 bg-black overflow-y-auto prose prose-invert prose-zinc max-w-none text-xs">
+          <div className="max-w-2xl mx-auto space-y-4 text-zinc-300 break-anywhere">
             {content.split("\n").map((line, idx) => {
               if (line.startsWith("# ")) {
-                return <h1 key={idx} className="text-xl font-bold text-white border-b border-zinc-800 pb-2">{line.replace("# ", "")}</h1>;
+                return <h1 key={idx} className="text-lg sm:text-xl font-bold text-white border-b border-zinc-800 pb-2">{line.replace("# ", "")}</h1>;
               }
               if (line.startsWith("## ")) {
-                return <h2 key={idx} className="text-base font-bold text-zinc-100 pt-2">{line.replace("## ", "")}</h2>;
+                return <h2 key={idx} className="text-sm sm:text-base font-bold text-zinc-100 pt-2">{line.replace("## ", "")}</h2>;
               }
               if (line.startsWith("### ")) {
-                return <h3 key={idx} className="text-sm font-semibold text-zinc-200">{line.replace("### ", "")}</h3>;
+                return <h3 key={idx} className="text-xs sm:text-sm font-semibold text-zinc-200">{line.replace("### ", "")}</h3>;
               }
               if (line.startsWith("- ") || line.startsWith("1. ")) {
                 return <li key={idx} className="ml-4 list-disc text-zinc-300">{line.replace(/^[-1.]\s*/, "")}</li>;
@@ -133,6 +135,7 @@ Yash.AI is a unified AI creation platform integrating multi-provider conversatio
           </div>
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

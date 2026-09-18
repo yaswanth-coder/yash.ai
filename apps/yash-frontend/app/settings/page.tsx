@@ -221,14 +221,15 @@ export default function SettingsPage() {
             {loadingProviders ? (
               <div className="text-xs text-zinc-500 py-6 text-center">Probing AI provider health...</div>
             ) : providersData ? (
-              <div className="rounded-xl overflow-hidden border border-white/6">
-                {/* Table Header */}
-                <div className="grid grid-cols-4 px-4 py-2.5 bg-white/3 border-b border-white/6">
-                  <span className="text-[11px] text-zinc-500 font-medium">Provider Name</span>
-                  <span className="text-[11px] text-zinc-500 font-medium text-center">Models Count</span>
-                  <span className="text-[11px] text-zinc-500 font-medium text-center">Latency (ms)</span>
-                  <span className="text-[11px] text-zinc-500 font-medium text-right">Status</span>
-                </div>
+              <div className="rounded-xl overflow-hidden border border-white/6 overflow-x-auto custom-scrollbar">
+                <div className="min-w-[460px] sm:min-w-0">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-4 px-4 py-2.5 bg-white/3 border-b border-white/6">
+                    <span className="text-[11px] text-zinc-500 font-medium">Provider Name</span>
+                    <span className="text-[11px] text-zinc-500 font-medium text-center">Models Count</span>
+                    <span className="text-[11px] text-zinc-500 font-medium text-center">Latency (ms)</span>
+                    <span className="text-[11px] text-zinc-500 font-medium text-right">Status</span>
+                  </div>
 
                 {/* Rows */}
                 {Object.entries(providersData.providers).map(([name, p], idx) => {
@@ -292,6 +293,7 @@ export default function SettingsPage() {
                     </div>
                   );
                 })}
+                </div>
               </div>
             ) : (
               <div className="text-xs text-zinc-500 py-4">Unable to load providers.</div>
@@ -299,26 +301,31 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Custom Models — appended inside the model selector card as a footer row */}
+        {/* Custom Models */}
         <div className="rounded-2xl bg-[#0f1117] border border-white/8 shadow-2xl overflow-hidden">
-          {/* Custom Models footer */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 border-b border-white/8">
-            <div>
-              <p className="text-sm font-bold text-white">Custom Models</p>
-              <p className="text-xs text-zinc-500 mt-0.5">Add your own API endpoints or local instances</p>
+          {/* Custom Models header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-white/8">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-white">Custom Connected Models</p>
+                  {customModels.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold">
+                      {customModels.length} Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Connect external AI endpoints (xKiro, xAI Grok, Ollama, OpenAI)</p>
+              </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsAddModelModalOpen(true)}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors cursor-pointer font-medium"
-              >
-                Add New Provider
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsAddModelModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/30 cursor-pointer border border-blue-500"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/30 cursor-pointer border border-blue-500"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Model</span>
@@ -326,29 +333,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <h2 className="text-sm font-bold text-zinc-200">Custom Connected Models</h2>
-              {customModels.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold">
-                  {customModels.length} Active
-                </span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAddModelModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Model</span>
-            </button>
-          </div>
-
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Connect external AI models (xKiro, xAI Grok, custom Ollama ports, or any OpenAI-compatible API) with their model ID and API key.
-          </p>
+          <div className="p-4 sm:p-5 space-y-3">
 
           {customModels.length === 0 ? (
             <div className="p-4 rounded-xl border border-dashed border-zinc-800 text-center space-y-2">
@@ -399,6 +384,7 @@ export default function SettingsPage() {
               ))}
             </div>
           )}
+          </div>
         </div>
 
         {/* 2. Privacy & Local Only Mode */}

@@ -1,7 +1,7 @@
-@import "tailwindcss";
-
 /* ─── Google Fonts ─────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap');
+
+@import "tailwindcss";
 
 /* ─── Design Tokens ────────────────────────────────── */
 :root {
@@ -385,6 +385,20 @@ html {
 img, video, canvas, svg {
   max-width: 100%;
   height: auto;
+}
+
+/* Responsive safety utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.break-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Touch target minimum size for accessibility */

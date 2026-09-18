@@ -12,6 +12,7 @@ import {
   FileText,
   Search,
   Pen,
+  ArrowLeft,
 } from "lucide-react";
 import MobileNav from "@/components/MobileNav";
 
@@ -109,16 +110,23 @@ const studios = [
 export default function CreateHubPage() {
   return (
     <div
-      className="min-h-screen text-white font-sans flex flex-col pb-20 md:pb-0"
+      className="min-h-screen text-white font-sans flex flex-col pb-24 md:pb-8"
       style={{ background: "#0a0a0f" }}
     >
       {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center">
+      <header className="flex items-center justify-between px-3.5 sm:px-6 py-3 sm:py-4 border-b border-white/5">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link
+            href="/chat"
+            className="p-1.5 sm:p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0 md:hidden"
+            title="Back to Chat"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shrink-0">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <span className="text-base font-bold text-white">Create Studio</span>
+          <span className="text-sm sm:text-base font-bold text-white truncate">Create Studio</span>
         </div>
 
         <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
@@ -128,7 +136,7 @@ export default function CreateHubPage() {
           <Link href="/settings" className="hover:text-white transition-colors">Settings</Link>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button className="relative w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -142,43 +150,43 @@ export default function CreateHubPage() {
       </header>
 
       {/* Card Grid */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
+      <main className="flex-1 p-3 sm:p-6 md:p-8">
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
           {studios.map((studio) => {
             const Icon = studio.icon;
             return (
               <Link
                 key={studio.id}
                 href={studio.href}
-                className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl cursor-pointer"
+                className="group relative flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl cursor-pointer"
                 style={{
                   background: studio.gradient,
-                  minHeight: "200px",
+                  minHeight: "190px",
                 }}
               >
                 {/* Subtle dark overlay for text readability */}
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-2xl" />
 
-                <div className="relative z-10 flex flex-col h-full gap-3">
+                <div className="relative z-10 flex flex-col h-full gap-2.5 sm:gap-3">
                   {/* Icon */}
                   <div
-                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${studio.iconBg} backdrop-blur-sm flex items-center justify-center border border-white/10`}
+                    className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${studio.iconBg} backdrop-blur-sm flex items-center justify-center border border-white/10`}
                   >
-                    <Icon className={`w-5 h-5 ${studio.iconColor}`} />
+                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${studio.iconColor}`} />
                   </div>
 
                   {/* Title + Description */}
-                  <div className="flex-1">
-                    <h2 className="text-base sm:text-lg font-bold text-white leading-tight">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
                       {studio.name}
                     </h2>
-                    <p className="text-xs sm:text-[13px] text-white/60 mt-1 leading-relaxed line-clamp-3">
+                    <p className="text-xs text-white/65 mt-1 leading-relaxed line-clamp-2 sm:line-clamp-3">
                       {studio.description}
                     </p>
                   </div>
 
                   {/* Get Started Button */}
-                  <button className="w-full py-2 px-4 rounded-xl bg-black/30 hover:bg-black/50 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white text-xs sm:text-sm font-semibold transition-all text-center">
+                  <button className="w-full py-1.5 sm:py-2 px-3 sm:px-4 rounded-xl bg-black/30 hover:bg-black/50 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white text-xs sm:text-sm font-semibold transition-all text-center cursor-pointer">
                     Get Started
                   </button>
                 </div>

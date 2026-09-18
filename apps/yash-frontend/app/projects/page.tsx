@@ -284,8 +284,8 @@ export default function ProjectsPage() {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-zinc-800 text-[11px] text-zinc-500">
-                    <span className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-zinc-800 text-[11px] text-zinc-500">
+                    <span className="flex items-center gap-1 shrink-0">
                       <FileText className="w-3 h-3 text-zinc-400" />
                       <span>{p.files?.length || 0} files</span>
                     </span>

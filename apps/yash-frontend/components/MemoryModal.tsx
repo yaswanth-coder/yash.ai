@@ -217,7 +217,7 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
 
         {/* Guest Mode Callout */}
         {!isAuthenticated && (
-          <div className="mx-6 mt-4 p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="mx-3.5 sm:mx-6 mt-3 sm:mt-4 p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <LogIn className="w-4 h-4 text-blue-400 shrink-0" />
               <div>
@@ -240,7 +240,7 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
         )}
 
         {/* Action & Training Bar */}
-        <div className="p-6 border-b border-zinc-800/80 bg-gradient-to-r from-blue-950/20 via-zinc-900/40 to-indigo-950/20 space-y-4">
+        <div className="p-3.5 sm:p-6 border-b border-zinc-800/80 bg-gradient-to-r from-blue-950/20 via-zinc-900/40 to-indigo-950/20 space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             {/* Toggle Learning */}
             <div className="flex items-center gap-3">
@@ -306,38 +306,40 @@ export default function MemoryModal({ isOpen, onClose, onMemoriesUpdated }: Memo
         </div>
 
         {/* Add Custom Memory Form */}
-        <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-900/30">
-          <form onSubmit={handleAddMemory} className="flex gap-2">
+        <div className="px-3.5 sm:px-6 py-3 sm:py-4 border-b border-zinc-800 bg-zinc-900/30">
+          <form onSubmit={handleAddMemory} className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={newFact}
               onChange={(e) => setNewFact(e.target.value)}
-              placeholder="Add custom rule (e.g. Always write clean TypeScript code with strict typing)..."
+              placeholder="Add custom rule (e.g. Always write clean TypeScript code)..."
               className="flex-1 px-3.5 py-2 text-xs bg-zinc-900 border border-zinc-700/60 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
             />
-            <select
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              className="px-2.5 py-2 text-xs bg-zinc-900 border border-zinc-700/60 rounded-xl text-zinc-300 focus:outline-none focus:border-blue-500"
-            >
-              <option value="preference">Preference</option>
-              <option value="skill">Skill / Stack</option>
-              <option value="project">Project</option>
-              <option value="style">Style</option>
-            </select>
-            <button
-              type="submit"
-              disabled={savingNew || !newFact.trim()}
-              className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-40"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="flex-1 sm:flex-none px-2.5 py-2 text-xs bg-zinc-900 border border-zinc-700/60 rounded-xl text-zinc-300 focus:outline-none focus:border-blue-500"
+              >
+                <option value="preference">Preference</option>
+                <option value="skill">Skill / Stack</option>
+                <option value="project">Project</option>
+                <option value="style">Style</option>
+              </select>
+              <button
+                type="submit"
+                disabled={savingNew || !newFact.trim()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 shrink-0 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Rule</span>
+              </button>
+            </div>
           </form>
         </div>
 
         {/* Memories List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-3 custom-scrollbar">
           {loading ? (
             <div className="text-center py-12 text-zinc-500 text-xs flex items-center justify-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin" />

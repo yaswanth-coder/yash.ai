@@ -22,6 +22,7 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 
 type NodeType = "note" | "rectangle" | "circle" | "text" | "image";
 
@@ -230,7 +231,7 @@ export default function VisualCanvasPage() {
   const selectedNode = nodes.find((n) => n.id === selectedId);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans select-none" style={{ cursor: isPanning ? "grabbing" : "default" }}>
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans select-none pb-24 lg:pb-0" style={{ cursor: isPanning ? "grabbing" : "default" }}>
       {/* Header */}
       <header className="h-14 border-b border-zinc-800/80 px-5 flex items-center justify-between bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-30">
         <div className="flex items-center gap-3">
@@ -461,6 +462,7 @@ export default function VisualCanvasPage() {
           )}
         </aside>
       </div>
+      <MobileNav />
     </div>
   );
 }

@@ -372,7 +372,7 @@ export default function ImageStudioPage() {
           )}
 
           {generatedImage ? (
-            <div className="relative w-full h-full flex items-center justify-center p-8">
+            <div className="relative w-full h-full flex items-center justify-center p-3 sm:p-8">
               <div className="relative group max-w-2xl w-full">
                 <img
                   src={generatedImage}
@@ -380,7 +380,7 @@ export default function ImageStudioPage() {
                   className="w-full h-auto rounded-2xl border border-zinc-800/60 shadow-2xl shadow-black/60 object-contain max-h-[70vh]"
                 />
                 {/* Floating action bar */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-zinc-700/60 rounded-2xl px-4 py-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/85 backdrop-blur-md border border-zinc-700/60 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2 shadow-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   <a
                     href={generatedImage}
                     download="yash-ai-generated.png"

@@ -10,6 +10,7 @@ import {
   createScheduledTask,
   deleteScheduledTask,
 } from "@/services/scheduled";
+import MobileNav from "@/components/MobileNav";
 
 export default function ScheduledPage() {
   const ready = useAuthGuard();
@@ -59,22 +60,22 @@ export default function ScheduledPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex flex-wrap items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Link
               href="/chat"
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-400" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-2 truncate">
+                <Clock className="w-5 h-5 text-amber-400 shrink-0" />
                 <span>Scheduled AI Routines</span>
               </h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 truncate">
                 Automate recurring AI tasks, daily briefings, research digests, and study reminders.
               </p>
             </div>
@@ -82,7 +83,7 @@ export default function ScheduledPage() {
         </div>
 
         {/* Create Task Form */}
-        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
+        <div className="p-4 sm:p-6 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-xl space-y-4">
           <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span>Schedule New AI Task</span>
@@ -160,6 +161,7 @@ export default function ScheduledPage() {
           )}
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

@@ -752,7 +752,7 @@ function ChatPageContent() {
                     {/* Submenu Flyout — liquid glass */}
                     {isProjectSubmenuOpen && (
                       <div
-                        className="absolute left-full top-0 ml-2 w-64 rounded-2xl p-2.5 text-xs text-zinc-200 z-50 animate-glass-slide-down"
+                        className="absolute left-0 sm:left-full top-full sm:top-0 mt-1 sm:mt-0 sm:ml-2 w-[calc(100vw-32px)] max-w-[280px] sm:w-64 rounded-2xl p-2.5 text-xs text-zinc-200 z-50 animate-glass-slide-down"
                         style={{
                           background: "rgba(10, 10, 22, 0.92)",
                           backdropFilter: "blur(32px) saturate(200%)",

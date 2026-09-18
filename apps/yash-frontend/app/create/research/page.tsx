@@ -13,6 +13,7 @@ import {
   Layers,
 } from "lucide-react";
 import api from "@/lib/axios";
+import MobileNav from "@/components/MobileNav";
 
 interface SearchSource {
   title: string;
@@ -55,9 +56,9 @@ export default function ResearchStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans pb-24 md:pb-10">
       {/* Studio Header */}
-      <header className="h-14 border-b border-zinc-800/80 px-6 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
+      <header className="h-14 border-b border-zinc-800/80 px-3.5 sm:px-6 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link
             href="/create"
@@ -143,6 +144,7 @@ export default function ResearchStudioPage() {
           </div>
         )}
       </div>
+      <MobileNav />
     </div>
   );
 }

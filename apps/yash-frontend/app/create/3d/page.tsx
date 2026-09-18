@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 
 // ───── Types ─────────────────────────────────────────────────────────────────
 
@@ -356,7 +357,7 @@ export default function ThreeDStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans pb-24 lg:pb-0">
       {/* Header */}
       <header className="h-14 border-b border-zinc-800/80 px-5 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
         <div className="flex items-center gap-3">
@@ -589,6 +590,7 @@ export default function ThreeDStudioPage() {
           </aside>
         )}
       </div>
+      <MobileNav />
     </div>
   );
 }

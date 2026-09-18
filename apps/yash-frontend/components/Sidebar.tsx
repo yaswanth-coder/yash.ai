@@ -231,8 +231,9 @@ export default function Sidebar({
           onClick={() => {
             onNewChat();
             if (pathname !== "/chat") router.push("/chat");
+            if (isOpenMobile) onCloseMobile?.();
           }}
-          className={`glass-btn-primary w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-white font-semibold text-xs cursor-pointer mb-3 ${
+          className={`glass-btn-primary w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-white font-semibold text-xs cursor-pointer mb-3 touch-target ${
             isCollapsed ? "px-0" : ""
           }`}
           title="Start New Conversation"
@@ -254,6 +255,9 @@ export default function Sidebar({
                   prefetch={true}
                   onMouseEnter={() => router.prefetch(item.href)}
                   onTouchStart={() => router.prefetch(item.href)}
+                  onClick={() => {
+                    if (isOpenMobile) onCloseMobile?.();
+                  }}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     active
                       ? "text-white"
@@ -276,6 +280,9 @@ export default function Sidebar({
               <div className="flex items-center justify-between px-2 py-1.5 mt-1">
                 <Link
                   href="/create"
+                  onClick={() => {
+                    if (isOpenMobile) onCloseMobile?.();
+                  }}
                   className={`flex items-center gap-2 text-xs font-bold transition-colors ${
                     pathname?.startsWith("/create") ? "text-blue-400" : "text-zinc-400 hover:text-zinc-200"
                   }`}
@@ -308,6 +315,9 @@ export default function Sidebar({
                         prefetch={true}
                         onMouseEnter={() => router.prefetch(ws.href)}
                         onTouchStart={() => router.prefetch(ws.href)}
+                        onClick={() => {
+                          if (isOpenMobile) onCloseMobile?.();
+                        }}
                         className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all ${
                           wsActive
                             ? "text-blue-300 font-semibold"
@@ -404,6 +414,7 @@ export default function Sidebar({
                       onSelect={(id) => {
                         onSelectConversation(id);
                         if (pathname !== "/chat") router.push("/chat");
+                        if (isOpenMobile) onCloseMobile?.();
                       }}
                       onDelete={onDeleteConversation}
                       onRename={onRenameConversation}
@@ -419,6 +430,7 @@ export default function Sidebar({
                       onSelect={(id) => {
                         onSelectConversation(id);
                         if (pathname !== "/chat") router.push("/chat");
+                        if (isOpenMobile) onCloseMobile?.();
                       }}
                       onDelete={onDeleteConversation}
                       onRename={onRenameConversation}
@@ -434,6 +446,7 @@ export default function Sidebar({
                       onSelect={(id) => {
                         onSelectConversation(id);
                         if (pathname !== "/chat") router.push("/chat");
+                        if (isOpenMobile) onCloseMobile?.();
                       }}
                       onDelete={onDeleteConversation}
                       onRename={onRenameConversation}
@@ -449,6 +462,7 @@ export default function Sidebar({
                       onSelect={(id) => {
                         onSelectConversation(id);
                         if (pathname !== "/chat") router.push("/chat");
+                        if (isOpenMobile) onCloseMobile?.();
                       }}
                       onDelete={onDeleteConversation}
                       onRename={onRenameConversation}
@@ -467,6 +481,7 @@ export default function Sidebar({
                   onClick={() => {
                     onSelectConversation(c.id);
                     if (pathname !== "/chat") router.push("/chat");
+                    if (isOpenMobile) onCloseMobile?.();
                   }}
                   className={`p-2.5 rounded-xl transition-all ${
                     activeId === c.id ? "text-white" : "text-zinc-400 hover:text-white"
@@ -488,7 +503,10 @@ export default function Sidebar({
         {!isCollapsed && (
           <div className="mt-2">
             <button
-              onClick={onOpenMemoryModal}
+              onClick={() => {
+                onOpenMemoryModal?.();
+                if (isOpenMobile) onCloseMobile?.();
+              }}
               className="w-full flex items-center justify-between p-2.5 rounded-xl cursor-pointer group transition-all shimmer-effect"
               style={{
                 background: "linear-gradient(135deg, rgba(124,92,252,0.12), rgba(79,140,255,0.08), rgba(20,184,166,0.06))",
@@ -523,6 +541,9 @@ export default function Sidebar({
           {!isCollapsed && (
             <Link
               href="/settings"
+              onClick={() => {
+                if (isOpenMobile) onCloseMobile?.();
+              }}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                 pathname === "/settings" ? "text-white" : "text-zinc-400 hover:text-zinc-100"
               }`}
@@ -563,7 +584,10 @@ export default function Sidebar({
               </div>
               {!isCollapsed && (
                 <button
-                  onClick={onLogout}
+                  onClick={() => {
+                    onLogout();
+                    if (isOpenMobile) onCloseMobile?.();
+                  }}
                   className="p-1 rounded-lg text-zinc-500 hover:text-red-400 transition-colors"
                   title="Logout"
                 >
@@ -574,7 +598,10 @@ export default function Sidebar({
           ) : (
             !isCollapsed && (
               <button
-                onClick={onOpenLogin}
+                onClick={() => {
+                  onOpenLogin();
+                  if (isOpenMobile) onCloseMobile?.();
+                }}
                 className="glass-btn w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-zinc-300 hover:text-white transition-all text-xs font-medium cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5 text-blue-400" />
