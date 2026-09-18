@@ -77,6 +77,9 @@ class ClaudeProvider(AIProvider):
             "anthropic-version": "2023-06-01",
             "content-type": "application/json",
         }
+        workspace_id = os.getenv("ANTHROPIC_WORKSPACE_ID", "")
+        if workspace_id:
+            headers["anthropic-workspace-id"] = workspace_id
 
         messages = []
         if history:
@@ -104,6 +107,9 @@ class ClaudeProvider(AIProvider):
             if res.status_code in (503, 529):
                 self.cooldown_until = time.time() + 30
                 raise RuntimeError(f"Anthropic overloaded ({res.status_code}) — no capacity available, falling back.")
+            if res.status_code == 400 and "workspace" in res.text.lower():
+                self.cooldown_until = time.time() + 86400
+                raise RuntimeError("Anthropic key requires anthropic-workspace-id header — skipping provider.")
             if res.status_code != 200:
                 raise RuntimeError(f"Anthropic error {res.status_code}: {res.text[:300]}")
             data = res.json()

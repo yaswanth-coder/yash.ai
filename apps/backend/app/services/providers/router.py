@@ -27,7 +27,7 @@ class ProviderRouter:
         }
 
     def _get_priority_list(self) -> List[str]:
-        raw = os.getenv("AI_PROVIDER_PRIORITY", "gemini,ollama,groq,nvidia,anthropic,openai")
+        raw = os.getenv("AI_PROVIDER_PRIORITY", "gemini,groq,custom,nvidia,anthropic,openai,ollama")
         return [p.strip().lower() for p in raw.split(",") if p.strip().lower() in self.providers]
 
     async def get_all_models(self) -> List[ProviderModel]:

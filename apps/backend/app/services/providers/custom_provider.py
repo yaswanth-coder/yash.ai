@@ -106,19 +106,31 @@ class CustomProvider(AIProvider):
         messages.append({"role": "user", "content": user_content})
         return messages
 
-    async def _resolve_model_config(self, model_id: str) -> Dict[str, Any]:
+    async def _resolve_model_config(self, model_id: Optional[str] = None) -> Dict[str, Any]:
         """Find base_url, api_key, and target model name."""
-        # 1. Check if it's xKiro
-        if model_id.startswith("xkiro:"):
+        m_id = (model_id or "").strip()
+
+        # 1. Default fallback to xKiro if key is set
+        if not m_id or m_id in ["default", "custom", "custom:default", "xkiro", "xkiro:default"]:
+            key = self._get_xkiro_key()
+            if key:
+                base_url = self._get_xkiro_base_url()
+                target_model = "qwen/qwen3.7-flash:free"
+                return {"base_url": base_url, "api_key": key, "target_model": target_model}
+
+        # 2. Explicit xKiro model
+        if m_id.startswith("xkiro:"):
             key = self._get_xkiro_key()
             if not key:
                 raise RuntimeError("XKIRO_API_KEY is not configured in .env")
             base_url = self._get_xkiro_base_url()
-            target_model = model_id.replace("xkiro:", "") or "xkiro-v1"
+            target_model = m_id.replace("xkiro:", "") or "qwen/qwen3.7-flash:free"
+            if target_model == "default":
+                target_model = "qwen/qwen3.7-flash:free"
             return {"base_url": base_url, "api_key": key, "target_model": target_model}
 
-        # 2. Check custom model database
-        cm = await get_custom_model_by_id(model_id)
+        # 3. Check custom model database
+        cm = await get_custom_model_by_id(m_id)
         if cm:
             target_model = cm["model_id"].replace("custom:", "")
             return {
@@ -126,6 +138,12 @@ class CustomProvider(AIProvider):
                 "api_key": cm["api_key"],
                 "target_model": target_model,
             }
+
+        # 4. Fallback if xKiro is available
+        key = self._get_xkiro_key()
+        if key:
+            base_url = self._get_xkiro_base_url()
+            return {"base_url": base_url, "api_key": key, "target_model": "qwen/qwen3.7-flash:free"}
 
         raise RuntimeError(f"Custom model '{model_id}' not found in registry")
 
@@ -138,9 +156,6 @@ class CustomProvider(AIProvider):
         model: Optional[str] = None,
         **kwargs,
     ) -> str:
-        if not model:
-            raise RuntimeError("Model ID must be specified for custom model generation")
-
         cfg = await self._resolve_model_config(model)
         base_url = cfg["base_url"]
         api_url = base_url if base_url.endswith("/chat/completions") else f"{base_url}/chat/completions"
@@ -150,19 +165,32 @@ class CustomProvider(AIProvider):
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
-        payload = {
-            "model": cfg["target_model"],
-            "messages": self._format_messages(message, history, system_prompt, file_info),
-            "temperature": 0.7,
-            "max_tokens": 4096,
-        }
+        candidate_models = [cfg["target_model"], "qwen/qwen3.7-flash:free", "minimax/minimax-m2.5:free"]
+        candidate_models = list(dict.fromkeys(candidate_models))
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            res = await client.post(api_url, headers=headers, json=payload)
-            if res.status_code != 200:
-                raise RuntimeError(f"Custom model error {res.status_code}: {res.text}")
-            data = res.json()
-            return data["choices"][0]["message"]["content"]
+        messages = self._format_messages(message, history, system_prompt, file_info)
+        last_err = None
+
+        for m in candidate_models:
+            payload = {
+                "model": m,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 4096,
+            }
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    res = await client.post(api_url, headers=headers, json=payload)
+                    if res.status_code == 200:
+                        data = res.json()
+                        return data["choices"][0]["message"]["content"]
+                    else:
+                        last_err = RuntimeError(f"Custom model error {res.status_code}: {res.text}")
+            except Exception as e:
+                last_err = e
+                continue
+
+        raise last_err or RuntimeError("Custom model failed to respond")
 
     async def stream_response(
         self,
@@ -173,9 +201,6 @@ class CustomProvider(AIProvider):
         model: Optional[str] = None,
         **kwargs,
     ) -> AsyncGenerator[str, None]:
-        if not model:
-            raise RuntimeError("Model ID must be specified for custom model generation")
-
         cfg = await self._resolve_model_config(model)
         base_url = cfg["base_url"]
         api_url = base_url if base_url.endswith("/chat/completions") else f"{base_url}/chat/completions"
@@ -185,27 +210,40 @@ class CustomProvider(AIProvider):
             "Content-Type": "application/json",
             "Accept": "text/event-stream",
         }
-        payload = {
-            "model": cfg["target_model"],
-            "messages": self._format_messages(message, history, system_prompt, file_info),
-            "temperature": 0.7,
-            "max_tokens": 4096,
-            "stream": True,
-        }
+        candidate_models = [cfg["target_model"], "qwen/qwen3.7-flash:free", "minimax/minimax-m2.5:free"]
+        candidate_models = list(dict.fromkeys(candidate_models))
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream("POST", api_url, headers=headers, json=payload) as response:
-                if response.status_code != 200:
-                    raise RuntimeError(f"Custom model stream error {response.status_code}")
-                async for line in response.aiter_lines():
-                    if line.startswith("data: "):
-                        raw = line[6:].strip()
-                        if raw == "[DONE]":
-                            break
-                        try:
-                            chunk = json.loads(raw)
-                            delta = chunk["choices"][0].get("delta", {}).get("content", "")
-                            if delta:
-                                yield delta
-                        except Exception:
+        messages = self._format_messages(message, history, system_prompt, file_info)
+        stream_succeeded = False
+
+        for m in candidate_models:
+            payload = {
+                "model": m,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 4096,
+                "stream": True,
+            }
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    async with client.stream("POST", api_url, headers=headers, json=payload) as response:
+                        if response.status_code != 200:
                             continue
+                        async for line in response.aiter_lines():
+                            if line.startswith("data: "):
+                                raw = line[6:].strip()
+                                if raw == "[DONE]":
+                                    stream_succeeded = True
+                                    break
+                                try:
+                                    chunk = json.loads(raw)
+                                    delta = chunk["choices"][0].get("delta", {}).get("content", "")
+                                    if delta:
+                                        stream_succeeded = True
+                                        yield delta
+                                except Exception:
+                                    continue
+                        if stream_succeeded:
+                            return
+            except Exception:
+                continue
