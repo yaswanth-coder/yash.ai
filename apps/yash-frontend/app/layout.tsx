@@ -5,7 +5,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import IosInstallModal from "@/components/IosInstallModal";
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -14,14 +14,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Yash.AI — Personal AI Assistant",
+  title: "Yash.AI",
   description:
-    "Yash.AI is a premium personal AI assistant powered by Gemini. Chat, code, analyze documents, and more.",
-  keywords: ["AI assistant", "Gemini", "chat", "code", "Yash.AI"],
-  manifest: "/manifest.json",
+    "Yash.AI is an intelligent AI workspace for chat, research, image and video creation, coding, agents, files, and productivity.",
+  keywords: ["AI assistant", "Gemini", "chat", "code", "Yash.AI", "workspace"],
+  manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.png",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/favicon.png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -44,6 +50,12 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap"
           rel="stylesheet"
         />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Yash.AI" />
+        <meta name="theme-color" content="#000000" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="min-h-full flex flex-col font-sans select-none sm:select-auto" suppressHydrationWarning>
         <PwaProvider>

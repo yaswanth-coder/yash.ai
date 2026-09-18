@@ -82,9 +82,9 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("appinstalled", handleAppInstalled);
 
-    // 6. Register Service Worker
+    // 6. Register Service Worker reliably
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
+      const registerSW = () => {
         navigator.serviceWorker
           .register("/sw.js")
           .then((reg) => {
@@ -93,7 +93,13 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
           .catch((err) => {
             console.warn("[PWA] Service Worker registration failed:", err);
           });
-      });
+      };
+
+      if (document.readyState === "complete") {
+        registerSW();
+      } else {
+        window.addEventListener("load", registerSW);
+      }
     }
 
     return () => {

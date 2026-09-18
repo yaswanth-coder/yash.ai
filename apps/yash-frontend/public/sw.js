@@ -1,14 +1,16 @@
 // Yash.AI Production Service Worker for PWA
-const CACHE_NAME = "yash-ai-cache-v1";
+const CACHE_NAME = "yash-ai-cache-v2";
 
 // Static assets pre-cached on install
 const PRECACHE_ASSETS = [
   "/",
+  "/manifest.webmanifest",
   "/manifest.json",
   "/favicon.png",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/apple-touch-icon.png",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-512-maskable.png",
+  "/icons/apple-touch-icon.png",
 ];
 
 // Install Event - Pre-cache core shell
@@ -40,23 +42,28 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch Event - Smart routing strategy
+// Fetch Event - Smart routing strategy with strict bypass for dynamic AI/API streams
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // 1. Only handle GET requests
+  // 1. Only handle GET requests (bypasses POST, PUT, DELETE, PATCH, file uploads)
   if (request.method !== "GET") {
     return;
   }
 
-  // 2. Bypass API calls, websockets, and backend proxies
+  // 2. Bypass API calls, websockets, backend proxies, streaming AI responses, auth, uploads
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/images/") ||
     url.pathname.startsWith("/auth/") ||
+    url.pathname.startsWith("/chat/") ||
+    url.pathname.startsWith("/upload/") ||
+    url.pathname.startsWith("/files/") ||
+    url.pathname.startsWith("/stream/") ||
     url.port === "8000" ||
-    url.protocol.startsWith("ws")
+    url.protocol.startsWith("ws") ||
+    request.headers.get("accept")?.includes("text/event-stream")
   ) {
     return;
   }
@@ -89,8 +96,9 @@ self.addEventListener("fetch", (event) => {
 
   // 4. Static assets (images, icons, fonts, CSS/JS bundles): Stale-While-Revalidate or Cache-First
   if (
-    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|ico|woff2?|css|js)$/) ||
-    url.pathname.startsWith("/_next/static/")
+    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|ico|woff2?|css|js|webmanifest|json)$/) ||
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/")
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
