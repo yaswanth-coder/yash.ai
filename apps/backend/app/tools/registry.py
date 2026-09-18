@@ -151,7 +151,8 @@ class ToolRegistry:
                 prompt=prompt,
                 style=style,
                 aspect_ratio=aspect_ratio,
-                num_images=1
+                num_images=1,
+                model="gemini:imagen-3.0"
             )
             imgs = await image_router.generate(task)
             if not imgs:

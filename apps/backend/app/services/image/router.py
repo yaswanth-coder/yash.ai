@@ -23,9 +23,9 @@ class ImageProviderRouter:
 
     def __init__(self):
         self.providers: Dict[str, BaseImageProvider] = {
+            "gemini": GeminiImagenProvider(),
             "pollinations": PollinationsImageProvider(),
             "openai": OpenAIDalleProvider(),
-            "gemini": GeminiImagenProvider(),
             "stability": StabilityAIProvider(),
         }
 
@@ -48,24 +48,27 @@ class ImageProviderRouter:
     def resolve_provider_for_model(self, model_id: Optional[str]) -> BaseImageProvider:
         """
         Resolves the appropriate provider for a given model ID.
-        Falls back to Pollinations if model is not recognized or provider is unconfigured.
+        Defaults to Google Gemini AI when available.
         """
         if not model_id:
+            gemini_p = self.providers.get("gemini")
+            if gemini_p and gemini_p.is_configured():
+                return gemini_p
             return self.providers["pollinations"]
 
         model_clean = model_id.lower().strip()
+
+        # Gemini Imagen models (Default / Preferred)
+        if "imagen" in model_clean or "gemini" in model_clean:
+            gemini_p = self.providers.get("gemini")
+            if gemini_p and gemini_p.is_configured():
+                return gemini_p
 
         # DALL-E models
         if "dall-e" in model_clean:
             openai_p = self.providers.get("openai")
             if openai_p and openai_p.is_configured():
                 return openai_p
-
-        # Gemini Imagen models
-        if "imagen" in model_clean or "gemini" in model_clean:
-            gemini_p = self.providers.get("gemini")
-            if gemini_p and gemini_p.is_configured():
-                return gemini_p
 
         # Stability models
         if "stable-diffusion" in model_clean or "sdxl" in model_clean or "stability" in model_clean:

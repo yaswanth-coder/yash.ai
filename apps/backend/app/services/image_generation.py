@@ -48,10 +48,10 @@ class ImageGenerationService:
         if negative_prompt and negative_prompt.strip():
             augmented_prompt += f" --no {negative_prompt.strip()}"
 
-        # 3. Generate image bytes via image_router with Pollinations fallback
+        # 3. Generate image bytes via image_router with Gemini default
         image_bytes = None
-        used_provider = provider or "pollinations"
-        used_model = model or "flux"
+        used_provider = provider or "gemini"
+        used_model = model or "gemini:imagen-3.0"
 
         try:
             from app.services.image.router import image_router

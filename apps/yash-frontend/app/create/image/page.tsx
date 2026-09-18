@@ -73,7 +73,7 @@ const STYLES = [
 export default function ImageStudioPage() {
   // Model Registry
   const [models, setModels] = useState<ImageCapability[]>([]);
-  const [selectedModelId, setSelectedModelId] = useState<string>("pollinations:flux");
+  const [selectedModelId, setSelectedModelId] = useState<string>("gemini:imagen-3.0");
   const activeModel = models.find((m) => m.model_id === selectedModelId) || models[0];
 
   // Prompt Intelligence & Controls
@@ -135,8 +135,11 @@ export default function ImageStudioPage() {
 
         if (availModels && availModels.length > 0) {
           setModels(availModels);
-          // Prefer Flux Fast or first available
-          const preferred = availModels.find((m) => m.model_id.includes("flux") && m.is_available) || availModels[0];
+          // Prefer Gemini AI or first available
+          const preferred =
+            availModels.find((m) => (m.model_id.includes("gemini") || m.model_id.includes("imagen")) && m.is_available) ||
+            availModels.find((m) => m.is_available) ||
+            availModels[0];
           setSelectedModelId(preferred.model_id);
         }
 
