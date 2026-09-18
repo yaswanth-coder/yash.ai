@@ -137,16 +137,49 @@ Yash.AI is a **fully responsive application** that automatically adapts to every
 | 🗂️ **Tablet (iPad / Android)** | Side-panel navigation, adaptive card grids |
 | 💻 **Desktop / Web** | Full sidebar, keyboard shortcuts, widescreen chat layout |
 
-**Mobile-specific implementations:**
-- Bottom tab `MobileNav` component with haptic-ready touch targets
-- iOS input zoom prevention (all inputs forced ≥ 16px on focus)
-- Safe-area insets for notched devices (`env(safe-area-inset-*)`)
-- Dynamic viewport height (`dvh`) to handle mobile browser chrome
-- Fully installable as a **PWA** — add directly to home screen from Chrome or Safari
+### 📲 How to Install Yash.AI (Mobile & Desktop)
+
+Yash.AI is a **Progressive Web Application (PWA)** that can be installed directly without an app store:
+
+- **Android / Windows / macOS (Chrome or Edge):**
+  - Open `http://localhost:3000` (or your deployed URL).
+  - Click the floating **"Install App"** button at the bottom of the screen, or click **"Install Yash.AI App"** in the sidebar or **Settings**.
+- **iPhone / iPad (Safari):**
+  - Open the site in Safari.
+  - Tap the **Share** button (`⎋` or `↥`) at the bottom of the screen.
+  - Scroll down and tap **"Add to Home Screen"** (`⊞`).
+  - Tap **"Add"** in the top-right corner. Yash.AI is now on your home screen and runs in full-screen standalone mode.
 
 ---
 
 ## ⚡ Quick Start
+
+### 🚀 1-Click Startup (Recommended)
+
+Yash.AI includes automated 1-click setup and launcher scripts for all platforms:
+
+#### Windows:
+```cmd
+:: One-click setup (installs backend & frontend dependencies)
+install.bat
+
+:: One-click start (launches backend, frontend, and opens browser)
+start.bat
+```
+
+#### Linux & macOS:
+```bash
+# Make executable & run setup
+chmod +x install.sh start.sh
+./install.sh
+
+# One-click start
+./start.sh
+```
+
+---
+
+### Manual Setup (Step-by-Step)
 
 ### Prerequisites
 - **Python 3.10+** (tested on 3.11, 3.12, 3.14)
