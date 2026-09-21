@@ -28,6 +28,11 @@ import {
   Maximize2,
   Eye,
   EyeOff,
+  Wrench,
+  CheckCircle2,
+  ShieldAlert,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { submitMessageFeedback } from "@/services/feedback";
 import dynamic from "next/dynamic";
@@ -49,6 +54,11 @@ interface ChatMessageProps {
     snippet: string;
   }>;
   chartImages?: string[];
+  toolActivity?: Array<{
+    tool: string;
+    status: string;
+    duration_ms?: number;
+  }>;
   createdAt?: string;
   onRegenerate?: () => void;
   onEditMessage?: (newContent: string) => void;
@@ -63,6 +73,7 @@ export default function ChatMessage({
   model,
   sources,
   chartImages,
+  toolActivity,
   createdAt,
   onRegenerate,
   onEditMessage,
@@ -222,6 +233,64 @@ export default function ChatMessage({
                       <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
                     </a>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Plugin Tools Execution Badges */}
+            {!isUser && toolActivity && toolActivity.length > 0 && (
+              <div className="mb-3 p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-2 animate-fadeIn">
+                <div className="flex items-center justify-between text-xs text-violet-400 font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <Wrench className="w-3.5 h-3.5 text-violet-400" />
+                    <span>Tools & Plugins Executed ({toolActivity.length})</span>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {toolActivity.map((t, idx) => {
+                    const isSuccess = t.status === "COMPLETED";
+                    const isConfirm = t.status === "CONFIRMATION_REQUIRED";
+                    const isDenied = t.status === "PERMISSION_DENIED" || t.status === "FAILED";
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800/80 text-xs"
+                      >
+                        <div className="flex items-center gap-2 font-mono text-zinc-300">
+                          <span className="text-[11px] font-semibold text-violet-300">{t.tool}</span>
+                          {t.duration_ms !== undefined && t.duration_ms > 0 && (
+                            <span className="text-[10px] text-zinc-500">{t.duration_ms}ms</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {isSuccess && (
+                            <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span>Completed</span>
+                            </span>
+                          )}
+                          {isConfirm && (
+                            <span className="flex items-center gap-1 text-[11px] text-amber-400 font-medium">
+                              <ShieldAlert className="w-3 h-3 text-amber-400" />
+                              <span>Awaiting Approval</span>
+                            </span>
+                          )}
+                          {isDenied && (
+                            <span className="flex items-center gap-1 text-[11px] text-red-400 font-medium">
+                              <AlertCircle className="w-3 h-3 text-red-400" />
+                              <span>Blocked / Denied</span>
+                            </span>
+                          )}
+                          {!isSuccess && !isConfirm && !isDenied && (
+                            <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                              <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
+                              <span>{t.status}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

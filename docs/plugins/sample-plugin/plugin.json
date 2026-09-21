@@ -1,0 +1,57 @@
+{
+  "id": "weather_radar",
+  "name": "Live Weather Radar",
+  "description": "Real-time atmospheric forecasts, precipitation radars, and severe weather advisories.",
+  "version": "1.0.0",
+  "author": "Yash.AI Ecosystem Team",
+  "icon": "Globe",
+  "category": "Research",
+  "auth_type": "api_key",
+  "permissions": [
+    "weather.read"
+  ],
+  "config_schema": {
+    "api_key": {
+      "type": "string",
+      "title": "OpenWeatherMap API Key",
+      "description": "API Key from openweathermap.org",
+      "required": true,
+      "secret": true
+    },
+    "units": {
+      "type": "string",
+      "title": "Temperature Units",
+      "description": "Measurement units (metric, imperial, standard)",
+      "default": "metric",
+      "required": false,
+      "secret": false
+    }
+  },
+  "tools": [
+    {
+      "id": "weather.get_current",
+      "name": "Get Current Weather",
+      "description": "Retrieves the current temperature, humidity, wind speed, and atmospheric conditions for a location.",
+      "permission": "weather.read",
+      "permission_tier": "read",
+      "requires_confirmation": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "City name or coordinates (e.g., 'San Francisco, CA' or 'London, UK')"
+          },
+          "include_forecast": {
+            "type": "boolean",
+            "description": "Whether to return the 48-hour outlook",
+            "default": false
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  ],
+  "documentation_url": "https://yash.ai/docs/plugins/weather_radar",
+  "privacy_policy_url": "https://yash.ai/privacy"
+}

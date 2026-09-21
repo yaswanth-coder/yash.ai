@@ -31,6 +31,7 @@ import EmptyState from "@/components/EmptyState";
 import MemoryModal from "@/components/MemoryModal";
 import ModelSelector from "@/components/ModelSelector";
 import VoiceModeModal from "@/components/VoiceModeModal";
+import ConfirmationModal from "@/components/ConfirmationModal";
 import { sendMessage, streamMessage, StreamEvent } from "@/services/chat";
 import {
   fetchConversations,
@@ -63,6 +64,13 @@ function ChatPageContent() {
   const [webSearchEnabled, setWebSearchEnabled] = useState(true);
   const [localOnly, setLocalOnly] = useState(false);
   const [activePersona, setActivePersona] = useState<PersonaItem | null>(null);
+
+  // Human Confirmation Modal state for sensitive tools
+  const [pendingConfirmation, setPendingConfirmation] = useState<{
+    ticketId: string;
+    actionSummary: string;
+    params: Record<string, any>;
+  } | null>(null);
 
   // Active conversation helper
   const activeConv = conversations.find((c) => c.id === activeConversationId);
@@ -369,21 +377,20 @@ function ChatPageContent() {
     setLoading(false);
   };
 
-  const handleSendMessage = async (content: string, filePath?: string) => {
-    if (!content.trim() && !filePath) return;
+  const handleSendMessage = async (content: string, filePath?: string, confirmationTicketId?: string) => {
+    if (!content.trim() && !filePath && !confirmationTicketId) return;
 
     setErrorMessage(null);
     const tempUserMessage: MessageItem = {
       id: Date.now().toString(),
       role: "user",
-      content,
+      content: content || (confirmationTicketId ? "✓ Confirmed security permission for tool execution." : ""),
       file_path: filePath,
       created_at: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, tempUserMessage]);
 
-    // Setup streaming
     const tempAssistantId = (Date.now() + 1).toString();
     const tempAssistantMessage: MessageItem = {
       id: tempAssistantId,
@@ -394,8 +401,48 @@ function ChatPageContent() {
 
     setMessages((prev) => [...prev, tempAssistantMessage]);
     setLoading(true);
-    setIsStreaming(true);
 
+    // If confirmation ticket is supplied, run directly via atomic gateway execution
+    if (confirmationTicketId) {
+      try {
+        const confRes = await sendMessage(
+          content || "Approved operation",
+          activeConversationId || undefined,
+          filePath,
+          selectedModel,
+          webSearchEnabled,
+          localOnly,
+          currentProjectId || undefined,
+          confirmationTicketId
+        );
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempAssistantId
+              ? {
+                  ...m,
+                  content: confRes.response,
+                  sources: confRes.sources,
+                  provider: confRes.provider,
+                  chart_images: confRes.chart_images,
+                  tool_activity: confRes.tool_activity,
+                }
+              : m
+          )
+        );
+        const list = await fetchConversations();
+        setConversations(list);
+      } catch (err: any) {
+        const errDetail = err?.response?.data?.detail || "Action execution failed. Please verify plugin credentials.";
+        setErrorMessage(errDetail);
+        setMessages((prev) => prev.filter((m) => m.id !== tempAssistantId));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Setup streaming
+    setIsStreaming(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -447,10 +494,17 @@ function ChatPageContent() {
                       ...m,
                       provider: event.provider,
                       model: event.model,
+                      tool_activity: event.tool_activity,
                     }
                   : m
               )
             );
+          } else if (event.type === "confirmation_required" || event.confirmation_ticket_id) {
+            setPendingConfirmation({
+              ticketId: event.confirmation_ticket_id || "",
+              actionSummary: event.confirmation_summary || "Tool execution requires approval",
+              params: event.confirmation_params || {},
+            });
           } else if (event.type === "done") {
             setIsStreaming(false);
           }
@@ -487,10 +541,18 @@ function ChatPageContent() {
                     sources: fallbackRes.sources,
                     provider: fallbackRes.provider,
                     chart_images: fallbackRes.chart_images,
+                    tool_activity: fallbackRes.tool_activity,
                   }
                 : m
             )
           );
+          if (fallbackRes.confirmation_ticket_id) {
+            setPendingConfirmation({
+              ticketId: fallbackRes.confirmation_ticket_id,
+              actionSummary: fallbackRes.confirmation_summary || "Operation requires approval",
+              params: fallbackRes.confirmation_params || {},
+            });
+          }
           const list = await fetchConversations();
           setConversations(list);
         } catch (fErr: any) {
@@ -920,6 +982,7 @@ function ChatPageContent() {
                   model={msg.model}
                   sources={msg.sources}
                   chartImages={msg.chart_images}
+                  toolActivity={msg.tool_activity}
                   createdAt={msg.created_at}
                   onRegenerate={index === messages.length - 1 && msg.role === "assistant" ? handleRegenerate : undefined}
                   onEditMessage={msg.role === "user" ? handleEditUserMessage : undefined}
@@ -964,6 +1027,21 @@ function ChatPageContent() {
       {/* Full-Duplex Voice Mode Modal */}
       {isVoiceModeOpen && (
         <VoiceModeModal onClose={() => setIsVoiceModeOpen(false)} />
+      )}
+
+      {/* Human Confirmation Modal for Write/Destructive Plugin Operations */}
+      {pendingConfirmation && (
+        <ConfirmationModal
+          isOpen={Boolean(pendingConfirmation)}
+          ticketId={pendingConfirmation.ticketId}
+          actionSummary={pendingConfirmation.actionSummary}
+          params={pendingConfirmation.params}
+          onClose={() => setPendingConfirmation(null)}
+          onConfirmed={async (ticketId) => {
+            setPendingConfirmation(null);
+            await handleSendMessage("", undefined, ticketId);
+          }}
+        />
       )}
     </div>
   );

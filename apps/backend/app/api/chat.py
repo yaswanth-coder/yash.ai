@@ -97,40 +97,144 @@ async def chat(
         await db["messages"].insert_one(user_msg)
 
     # 4. Safe Tool & Web Search & Python Sandbox Execution
+    user_id = current_user["_id"] if current_user else None
     tool_context, sources, chart_images = await orchestrator.execute_pre_chat_tools(
         message=request.message,
+        user_id=user_id,
         web_search_enabled=request.web_search and not request.local_only,
-        python_exec_enabled=True,
         rag_enabled=True,
     )
 
-    # 5. Retrieve learned user memory context
+    # 5. Retrieve dynamic tools system prompt based on user's active plugins
+    dynamic_tools_prompt = await orchestrator.build_tools_system_prompt(user_id=user_id)
+
+    # 6. Retrieve learned user memory context
     memory_context = ""
     if current_user and not request.local_only:
         memory_context = await get_memory_context_string(current_user["_id"], db)
 
-    # 6. Compose system prompt
+    # 7. Compose system prompt
     full_system_prompt = BASE_SYSTEM_INSTRUCTION
     if memory_context:
         full_system_prompt += f"\n\n{memory_context}"
     if tool_context:
         full_system_prompt += f"\n\n{tool_context}"
+    if dynamic_tools_prompt:
+        full_system_prompt += f"\n\n{dynamic_tools_prompt}"
 
-    # 7. Route request through AI Gateway
+    # 8. Route request through AI Gateway with multi-step tool execution support
+    tool_activity = []
+    pending_ticket_id = None
+    pending_summary = None
+    pending_params = None
+
     try:
-        route_res = await router_service.generate_response(
-            message=request.message,
-            history=history,
-            system_prompt=full_system_prompt,
-            file_info=file_info,
-            requested_model=request.model,
-            local_only=request.local_only,
-        )
-        ai_reply = route_res["response"]
-        provider_used = route_res.get("provider")
-        model_used = route_res.get("model")
-        fallback_used = route_res.get("fallback_used", False)
-        original_provider = route_res.get("original_provider")
+        if request.confirmation_ticket_id:
+            from app.tools.confirmation import get_confirmation_manager
+            conf_mgr = get_confirmation_manager()
+            ticket = conf_mgr.get_ticket(request.confirmation_ticket_id)
+            if ticket and (ticket.user_id == (user_id or "anonymous") or ticket.user_id == "anonymous") and ticket.status == "APPROVED":
+                tool_res = await orchestrator.execute_tool_call(
+                    tool_id=ticket.tool_id,
+                    params=ticket.params,
+                    user_id=user_id,
+                    confirmation_ticket_id=request.confirmation_ticket_id
+                )
+                tool_activity.append({
+                    "tool": ticket.tool_id,
+                    "status": tool_res.get("status", "COMPLETED"),
+                    "duration_ms": tool_res.get("duration_ms", 0)
+                })
+                result_payload = tool_res.get("data") if tool_res.get("success") else {"error": tool_res.get("error")}
+                step_history = list(history)
+                confirm_feedback_msg = (
+                    f"The user has approved and executed the operation: {ticket.action_summary}.\n"
+                    f"[Tool Execution Result for {ticket.tool_id}]:\n"
+                    f"{json.dumps(result_payload, indent=2)}\n\n"
+                    "Please provide a final friendly confirmation and summary to the user."
+                )
+                route_res = await router_service.generate_response(
+                    message=confirm_feedback_msg,
+                    history=step_history,
+                    system_prompt=full_system_prompt,
+                    requested_model=request.model,
+                    local_only=request.local_only,
+                )
+                ai_reply = route_res["response"]
+                provider_used = route_res.get("provider")
+                model_used = route_res.get("model")
+                fallback_used = route_res.get("fallback_used", False)
+                original_provider = route_res.get("original_provider")
+            else:
+                ai_reply = "The security confirmation ticket is either expired, already consumed, or invalid."
+                provider_used = "system"
+                model_used = "system"
+                fallback_used = False
+                original_provider = None
+        else:
+            route_res = await router_service.generate_response(
+                message=request.message,
+                history=history,
+                system_prompt=full_system_prompt,
+                file_info=file_info,
+                requested_model=request.model,
+                local_only=request.local_only,
+            )
+            ai_reply = route_res["response"]
+            provider_used = route_res.get("provider")
+            model_used = route_res.get("model")
+            fallback_used = route_res.get("fallback_used", False)
+            original_provider = route_res.get("original_provider")
+
+        # Check for tool call
+        parsed_call = orchestrator.parse_tool_call(ai_reply)
+        depth = 0
+        while parsed_call and depth < orchestrator.max_tool_depth:
+            depth += 1
+            tool_name, tool_params = parsed_call
+
+            # Execute tool through security gateway
+            tool_res = await orchestrator.execute_tool_call(
+                tool_id=tool_name,
+                params=tool_params,
+                user_id=user_id
+            )
+
+            tool_status = tool_res.get("status", "COMPLETED")
+            tool_activity.append({
+                "tool": tool_name,
+                "status": tool_status,
+                "duration_ms": tool_res.get("duration_ms", 0)
+            })
+
+            # Check if confirmation is required
+            if tool_status == "CONFIRMATION_REQUIRED":
+                pending_ticket_id = tool_res.get("ticket_id")
+                pending_summary = tool_res.get("action_summary")
+                pending_params = tool_res.get("params")
+                ai_reply = f"I am ready to perform this action ({tool_res.get('action_summary')}), but it requires your security confirmation before proceeding."
+                break
+
+            # Feed tool result back to model to continue reasoning
+            result_payload = tool_res.get("data") if tool_res.get("success") else {"error": tool_res.get("error")}
+            step_history = list(history)
+            step_history.append({"role": "assistant", "content": ai_reply})
+            tool_feedback_msg = (
+                f"[Tool Result for {tool_name}]:\n"
+                f"{json.dumps(result_payload, indent=2)}\n\n"
+                "Please synthesize your answer for the user based on these tool findings."
+            )
+
+            route_res_step = await router_service.generate_response(
+                message=tool_feedback_msg,
+                history=step_history,
+                system_prompt=full_system_prompt,
+                requested_model=request.model,
+                local_only=request.local_only,
+            )
+            ai_reply = route_res_step["response"]
+            parsed_call = orchestrator.parse_tool_call(ai_reply)
+
     except Exception as e:
         ai_reply = f"I apologize, but I encountered an error: {str(e)}"
         provider_used = "error"
@@ -138,7 +242,7 @@ async def chat(
         fallback_used = False
         original_provider = None
 
-    # 8. Save assistant message and update conversation
+    # 9. Save assistant message and update conversation
     if conversation:
         assistant_msg = new_message(
             conversation_id=conversation["_id"],
@@ -147,13 +251,15 @@ async def chat(
         )
         assistant_msg["provider"] = provider_used
         assistant_msg["model"] = model_used
+        if tool_activity:
+            assistant_msg["tool_activity"] = tool_activity
         await db["messages"].insert_one(assistant_msg)
         await db["conversations"].update_one(
             {"_id": conversation["_id"]},
             {"$set": {"updated_at": datetime.now(timezone.utc)}}
         )
 
-    # 9. Asynchronous memory extraction
+    # 10. Asynchronous memory extraction
     if current_user and request.message and not request.local_only:
         asyncio.create_task(
             auto_extract_memory_from_turn(
@@ -173,6 +279,10 @@ async def chat(
         original_provider=original_provider,
         sources=sources if sources else None,
         chart_images=chart_images if chart_images else None,
+        tool_activity=tool_activity if tool_activity else None,
+        confirmation_ticket_id=pending_ticket_id,
+        confirmation_summary=pending_summary,
+        confirmation_params=pending_params,
     )
 
 
@@ -230,13 +340,21 @@ async def chat_stream(
         )
         await db["messages"].insert_one(user_msg)
 
+    user_id = current_user["_id"] if current_user else None
     tool_context, sources, chart_images = "", [], []
     try:
         tool_context, sources, chart_images = await orchestrator.execute_pre_chat_tools(
             message=request.message,
+            user_id=user_id,
             web_search_enabled=request.web_search and not request.local_only
         )
     except Exception as tool_err:
+        pass
+
+    dynamic_tools_prompt = ""
+    try:
+        dynamic_tools_prompt = await orchestrator.build_tools_system_prompt(user_id=user_id)
+    except Exception:
         pass
 
     memory_context = ""
@@ -251,6 +369,8 @@ async def chat_stream(
         full_system_prompt += f"\n\n{memory_context}"
     if tool_context:
         full_system_prompt += f"\n\n{tool_context}"
+    if dynamic_tools_prompt:
+        full_system_prompt += f"\n\n{dynamic_tools_prompt}"
 
     async def sse_event_generator() -> AsyncGenerator[str, None]:
         full_response_text = []

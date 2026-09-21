@@ -15,7 +15,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-[⚡ Quick Start](#-quick-start) · [✨ Features](#-key-capabilities) · [🎨 Create Studio](#-create-studio-suite) · [🧠 Multi-Model AI](#-multi-model-ai-architecture) · [📱 Mobile App](#-mobile--cross-platform) · [📡 API Docs](#-api-endpoints)
+[⚡ Quick Start](#-quick-start) · [✨ Features](#-key-capabilities) · [🧩 Plugins & Tools](#-enterprise-plugin--tool-platform) · [🎨 Create Studio](#-create-studio-suite) · [🧠 Multi-Model AI](#-multi-model-ai-architecture) · [📱 Mobile App](#-mobile--cross-platform) · [📡 API Docs](#-api-endpoints)
 
 </div>
 
@@ -71,6 +71,7 @@
 
 - ⚡ **High-Speed SSE Streaming** — Token-by-token real-time generation with sub-100ms first-chunk response time.
 - 🧠 **Multi-Provider AI Router** — Seamless fallback across **Google Gemini (3.6 Flash)**, **NVIDIA NIM** (Llama 3.3, DeepSeek R1, Nemotron), **Ollama Local LLMs**, **Groq**, **OpenAI**, **Anthropic Claude**, and **Custom / xKiro models**.
+- 🧩 **Enterprise Plugin & Tool Platform** — Real tool calling with SSRF protection, Fernet authenticated encrypted credentials, Human-in-the-Loop confirmations, and 7 first-party plugins (Web Search, Files, GitHub, Google Drive, Google Calendar, Slack, Notion).
 - 🎨 **Create Studio Workspaces** — Dedicated creative hubs for **Images**, **Videos**, **UI/Canvas Design**, **3D Models**, **Code**, **Audio**, **Documents**, and **Deep Research**.
 - 📁 **Projects & Context Workspaces** — Attach documents, custom instructions, and organize threads into dedicated project workspaces.
 - 💾 **Long-Term Memory & Learning** — Learns user preferences, coding habits, and project context silently over time.
@@ -79,6 +80,28 @@
 - 🌐 **Multilingual Auto-Fluency** — Native fluency in Telugu, Hindi, Spanish, French, Japanese, and 50+ languages.
 - 🔧 **Bring Your Own Model** — Add any custom model via UI by providing an API endpoint, model ID, and key (xKiro, OpenAI-compatible, NVIDIA NIM).
 - 🔒 **Persistent Sessions** — Stay signed in across browser restarts; only log out when you explicitly choose to.
+
+---
+
+## 🧩 Enterprise Plugin & Tool Platform
+
+Yash.AI features a production-ready, extensible plugin platform allowing the AI to safely discover tools, inspect schemas, request user approval for write operations, and reason over execution results.
+
+- **Marketplace & Discovery (`/plugins`)**: Category filters, real-time search, permission inspector, and credential manager.
+- **Tool Execution Security Gateway**:
+  - **Zero Plaintext Secrets**: All user credentials encrypted at rest using AES-128-CBC + HMAC-SHA256 (`Fernet`).
+  - **SSRF Defense**: Strict filtering preventing loopback (`127.0.0.1`), private IP ranges (`RFC 1918`), and cloud metadata (`169.254.169.254`).
+  - **Human-in-the-Loop Confirmation**: Sensitive write operations (creating calendar events, sending Slack messages, creating GitHub issues) generate single-use signed tickets requiring explicit approval.
+  - **Sliding-Window Rate Limiting**: 60 calls/minute per user preventing tool abuse.
+  - **Anti-Prompt-Injection Demarcation**: Bounded tool results protecting against indirect prompt injection.
+- **First-Party Integrations**:
+  - 🌐 **Web Search** (`web.search`)
+  - 📁 **User Files** (`files.list`, `files.search`, `files.read`, `files.summarize`)
+  - 🐙 **GitHub** (`github.search_repositories`, `github.get_repository`, `github.list_issues`, `github.get_issue`, `github.create_issue`)
+  - 📂 **Google Drive** (`drive.search`, `drive.get_file`, `drive.download_file`)
+  - 📅 **Google Calendar** (`calendar.list_events`, `calendar.get_event`, `calendar.create_event`, `calendar.update_event`, `calendar.delete_event`)
+  - 💬 **Slack** (`slack.list_channels`, `slack.search_messages`, `slack.get_messages`, `slack.send_message`)
+  - 📝 **Notion** (`notion.search`, `notion.get_page`, `notion.create_page`)
 
 ---
 

@@ -11,6 +11,7 @@ class ChatRequest(BaseModel):
     web_search: bool = True
     persona_id: Optional[str] = None
     project_id: Optional[str] = None
+    confirmation_ticket_id: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -22,3 +23,7 @@ class ChatResponse(BaseModel):
     original_provider: Optional[str] = None
     sources: Optional[List[Dict[str, Any]]] = None
     chart_images: Optional[List[str]] = None
+    tool_activity: Optional[List[Dict[str, Any]]] = None
+    confirmation_ticket_id: Optional[str] = None
+    confirmation_summary: Optional[str] = None
+    confirmation_params: Optional[Dict[str, Any]] = None

@@ -1,5 +1,11 @@
 import api from "@/lib/axios";
 
+export interface ToolActivityItem {
+  tool: string;
+  status: string;
+  duration_ms?: number;
+}
+
 export interface ChatResponse {
   response: string;
   conversation_id?: string;
@@ -14,10 +20,14 @@ export interface ChatResponse {
     snippet: string;
   }>;
   chart_images?: string[];
+  tool_activity?: ToolActivityItem[];
+  confirmation_ticket_id?: string;
+  confirmation_summary?: string;
+  confirmation_params?: Record<string, any>;
 }
 
 export interface StreamEvent {
-  type: "init" | "token" | "meta" | "done" | "error";
+  type: "init" | "token" | "meta" | "done" | "error" | "tool_activity" | "confirmation_required";
   token?: string;
   conversation_id?: string;
   sources?: Array<{
@@ -31,6 +41,10 @@ export interface StreamEvent {
   model?: string;
   fallback_used?: boolean;
   original_provider?: string;
+  tool_activity?: ToolActivityItem[];
+  confirmation_ticket_id?: string;
+  confirmation_summary?: string;
+  confirmation_params?: Record<string, any>;
 }
 
 export async function sendMessage(
@@ -40,7 +54,8 @@ export async function sendMessage(
   model = "auto",
   webSearch = true,
   localOnly = false,
-  projectId?: string
+  projectId?: string,
+  confirmationTicketId?: string
 ): Promise<ChatResponse> {
   const response = await api.post<ChatResponse>("/chat/", {
     message,
@@ -50,6 +65,7 @@ export async function sendMessage(
     web_search: webSearch,
     local_only: localOnly,
     project_id: projectId,
+    confirmation_ticket_id: confirmationTicketId,
   });
   return response.data;
 }

@@ -152,7 +152,7 @@ export default function Sidebar({
   const primaryNavItems = [
     { label: "Chat", icon: MessageSquare, href: "/chat" },
     { label: "Projects", icon: FolderKanban, href: "/projects" },
-    { label: "AI Tools", icon: Wrench, href: "/plugins" },
+    { label: "Plugins & Tools", icon: Blocks, href: "/plugins" },
     { label: "Agents", icon: Bot, href: "/agents" },
     { label: "Files", icon: LibraryIcon, href: "/library" },
   ];

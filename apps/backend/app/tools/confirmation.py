@@ -66,7 +66,7 @@ class ConfirmationManager:
         ticket = self.get_ticket(ticket_id)
         if not ticket:
             return False
-        return ticket.user_id == user_id and ticket.status in ("PENDING", "APPROVED")
+        return ticket.user_id == user_id and ticket.status == "APPROVED"
 
     def approve_ticket(self, ticket_id: str, user_id: str) -> bool:
         with self._lock:

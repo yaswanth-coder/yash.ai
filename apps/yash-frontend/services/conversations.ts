@@ -14,6 +14,11 @@ export interface MessageItem {
     snippet: string;
   }>;
   chart_images?: string[];
+  tool_activity?: Array<{
+    tool: string;
+    status: string;
+    duration_ms?: number;
+  }>;
   created_at?: string;
 }
 

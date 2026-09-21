@@ -52,6 +52,53 @@ async def read_user_file_metadata(user_id: str, file_id: str) -> Dict[str, Any]:
     }
 
 
+async def search_user_files(user_id: str, query: str) -> Dict[str, Any]:
+    """
+    Search assets belonging exclusively to the authenticated user by name or prompt.
+    """
+    db = get_database()
+    regex = {"$regex": query, "$options": "i"}
+    assets = await (
+        db["assets"]
+        .find({
+            "user_id": user_id,
+            "$or": [{"name": regex}, {"prompt": regex}, {"type": regex}]
+        })
+        .limit(10)
+        .to_list(None)
+    )
+    return {
+        "query": query,
+        "count": len(assets),
+        "matches": [
+            {
+                "id": a["_id"],
+                "name": a["name"],
+                "type": a["type"],
+                "size_bytes": a.get("size_bytes", 0),
+                "url": a.get("url"),
+                "prompt": a.get("prompt"),
+            }
+            for a in assets
+        ]
+    }
+
+
+async def summarize_user_file(user_id: str, file_id: str) -> Dict[str, Any]:
+    """
+    Produce a concise summary of the specified user asset.
+    """
+    meta = await read_user_file_metadata(user_id, file_id)
+    if "error" in meta:
+        return meta
+    return {
+        "id": meta["id"],
+        "name": meta["name"],
+        "type": meta["type"],
+        "summary": f"User file '{meta['name']}' of type {meta['type']} ({meta['size_bytes']} bytes). Created via prompt: {meta.get('prompt') or 'uploaded asset'}."
+    }
+
+
 async def delete_user_file(user_id: str, file_id: str) -> Dict[str, Any]:
     """
     Delete a user asset. Requires explicit human confirmation.
@@ -64,3 +111,4 @@ async def delete_user_file(user_id: str, file_id: str) -> Dict[str, Any]:
     # Delete asset doc
     await db["assets"].delete_one({"_id": file_id, "user_id": user_id})
     return {"success": True, "deleted_id": file_id, "name": asset["name"]}
+

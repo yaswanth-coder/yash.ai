@@ -19,6 +19,7 @@ from app.api.personas import router as personas_router
 from app.api.rag import router as rag_router
 from app.api.assets import router as assets_router
 from app.api.tools_gateway import router as tools_gateway_router
+from app.api.plugins import router as plugins_router
 from app.api.generations import router as generations_router
 from app.api.canvas import router as canvas_router
 from app.api.images import router as images_router
@@ -76,6 +77,7 @@ app.include_router(personas_router)
 app.include_router(rag_router)
 app.include_router(assets_router)
 app.include_router(tools_gateway_router)
+app.include_router(plugins_router)
 app.include_router(generations_router)
 app.include_router(canvas_router)
 app.include_router(images_router)

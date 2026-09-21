@@ -23,4 +23,6 @@ class ToolDefinition:
     requires_confirmation: bool = False      # Whether human signoff is mandatory
     timeout_seconds: int = 30
     is_first_party: bool = True
+    plugin_id: Optional[str] = None          # Associated plugin id (e.g. "github", "files")
+    required_permission: Optional[str] = None # e.g. "github.write", "calendar.read"
     handler: Optional[Callable] = None       # Async or sync callable
