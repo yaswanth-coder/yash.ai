@@ -231,10 +231,10 @@ export default function VisualCanvasPage() {
   const selectedNode = nodes.find((n) => n.id === selectedId);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans select-none pb-24 lg:pb-0" style={{ cursor: isPanning ? "grabbing" : "default" }}>
+    <div className="h-[100dvh] max-h-[100dvh] bg-black text-white flex flex-col font-sans select-none pb-safe-nav lg:pb-0 overflow-hidden" style={{ cursor: isPanning ? "grabbing" : "default" }}>
       {/* Header */}
-      <header className="h-14 border-b border-zinc-800/80 px-5 flex items-center justify-between bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="h-14 border-b border-zinc-800/80 px-3 sm:px-5 flex items-center justify-between bg-zinc-950/90 backdrop-blur-sm sticky top-0 z-30 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link href="/create" className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -242,11 +242,11 @@ export default function VisualCanvasPage() {
             <div className="w-7 h-7 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
               <Layout className="w-4 h-4" />
             </div>
-            <span className="font-bold text-sm text-zinc-100">Yash.AI Infinite Canvas</span>
+            <span className="font-bold text-sm text-zinc-100 hidden sm:inline">Yash.AI Infinite Canvas</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar py-1">
           {/* Toolbox */}
           {[
             { icon: <StickyNote className="w-3.5 h-3.5" />, action: () => addNode("note"), label: "Note" },
@@ -257,40 +257,40 @@ export default function VisualCanvasPage() {
             <button
               key={i}
               onClick={t.action}
-              className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs hover:bg-zinc-800 hover:text-white transition-colors"
+              className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs hover:bg-zinc-800 hover:text-white transition-colors shrink-0 touch-target"
             >
-              {t.icon} {t.label}
+              {t.icon} <span className="hidden xs:inline">{t.label}</span>
             </button>
           ))}
 
-          <div className="w-px h-6 bg-zinc-800 mx-1" />
+          <div className="w-px h-6 bg-zinc-800 mx-1 shrink-0" />
 
           {/* Zoom */}
-          <button onClick={() => setZoom((z) => Math.min(z + 0.1, 2.5))} className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors">
+          <button onClick={() => setZoom((z) => Math.min(z + 0.1, 2.5))} className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0">
             <ZoomIn className="w-4 h-4" />
           </button>
-          <span className="text-xs text-zinc-500 font-mono w-10 text-center">{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom((z) => Math.max(z - 0.1, 0.3))} className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors">
+          <span className="text-xs text-zinc-500 font-mono w-10 text-center shrink-0">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoom((z) => Math.max(z - 0.1, 0.3))} className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0">
             <ZoomOut className="w-4 h-4" />
           </button>
-          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Reset View">
+          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0" title="Reset View">
             <Maximize2 className="w-4 h-4" />
           </button>
 
-          <div className="w-px h-6 bg-zinc-800 mx-1" />
+          <div className="w-px h-6 bg-zinc-800 mx-1 shrink-0" />
 
           <button
             onClick={saveCanvas}
             disabled={saving}
-            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 text-xs hover:bg-violet-600/30 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 text-xs hover:bg-violet-600/30 transition-colors disabled:opacity-50 shrink-0 touch-target"
           >
             <Save className="w-3.5 h-3.5" />
-            {saving ? "Saving..." : "Save"}
+            <span>{saving ? "..." : "Save"}</span>
           </button>
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden" style={{ height: "calc(100vh - 3.5rem)" }}>
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-hidden">
         {/* Canvas Area */}
         <div
           className="lg:col-span-9 relative overflow-hidden bg-[radial-gradient(circle_at_1px_1px,_rgba(255,255,255,0.05)_1px,_transparent_0)] bg-[length:28px_28px]"

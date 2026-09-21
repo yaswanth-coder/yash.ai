@@ -238,7 +238,7 @@ export default function PluginsPage() {
   }, [plugins, activeTab, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-12">
+    <div className="min-h-dvh bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-safe-nav md:pb-12">
       <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
         {/* Header bar */}
         <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-4">
@@ -590,7 +590,7 @@ export default function PluginsPage() {
         {/* Configure Credentials Modal */}
         {configModalOpen && selectedPlugin && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 max-h-[90dvh] overflow-y-auto custom-scrollbar">
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
@@ -669,7 +669,7 @@ export default function PluginsPage() {
         {/* Permissions Inspector Modal */}
         {permissionsModalOpen && selectedPlugin && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 max-h-[90dvh] overflow-y-auto custom-scrollbar">
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-blue-400">

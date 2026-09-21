@@ -171,7 +171,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+    <div className="min-h-dvh bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-safe-nav md:pb-10">
       <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-3">

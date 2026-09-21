@@ -3,13 +3,12 @@ import "./globals.css";
 import { PwaProvider } from "@/context/PwaContext";
 import InstallPrompt from "@/components/InstallPrompt";
 import IosInstallModal from "@/components/IosInstallModal";
+import OfflineNotice from "@/components/OfflineNotice";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -59,6 +58,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col font-sans select-none sm:select-auto" suppressHydrationWarning>
         <PwaProvider>
+          <OfflineNotice />
           {children}
           <InstallPrompt />
           <IosInstallModal />

@@ -13,7 +13,7 @@
   "categories": [
     "productivity",
     "utilities",
-    "artificial-intelligence"
+    "developer"
   ],
   "icons": [
     {
@@ -70,6 +70,18 @@
       "short_name": "Projects",
       "description": "Access project workspaces",
       "url": "/projects",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "AI Tools & Plugins",
+      "short_name": "Tools",
+      "description": "Access AI tools and plugins",
+      "url": "/plugins",
       "icons": [
         {
           "src": "/icons/icon-192.png",

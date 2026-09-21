@@ -68,7 +68,7 @@ export default function LibraryPage() {
   const filtered = files.filter((f) => f.filename.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-24 md:pb-10">
+    <div className="min-h-dvh bg-black text-white p-3.5 sm:p-6 md:p-10 font-sans pb-safe-nav md:pb-10">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 border-b border-zinc-800/80 pb-4 sm:pb-6">

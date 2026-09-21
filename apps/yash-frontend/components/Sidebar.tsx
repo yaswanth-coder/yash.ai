@@ -82,6 +82,33 @@ export default function Sidebar({
   const router = useRouter();
   const { isInstalled, isInstallable, promptInstall } = usePwaInstall();
 
+  // Auto-collapse on tablet viewports (768px - 1024px) to maximize workspace
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768 && window.innerWidth < 1024) {
+      setIsCollapsed(true);
+    }
+  }, []);
+
+  // Lock body scroll and close on ESC key when mobile drawer is open
+  useEffect(() => {
+    if (!isOpenMobile) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCloseMobile?.();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpenMobile, onCloseMobile]);
+
   const filteredConvs = useMemo(() => {
     if (!searchQuery.trim()) return conversations;
     return conversations.filter((c) =>
@@ -213,10 +240,10 @@ export default function Sidebar({
           {isOpenMobile ? (
             <button
               onClick={onCloseMobile}
-              className="glass-btn p-2 rounded-xl text-zinc-400 hover:text-white transition-all flex items-center justify-center min-w-[36px] min-h-[36px]"
+              className="glass-btn p-2.5 rounded-xl text-zinc-400 hover:text-white transition-all flex items-center justify-center min-w-[44px] min-h-[44px] touch-target"
               aria-label="Close menu"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           ) : (
             <button

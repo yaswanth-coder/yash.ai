@@ -89,7 +89,7 @@ export default function ProjectsPage() {
     });
 
   return (
-    <div className="min-h-screen bg-black text-white p-3.5 sm:p-6 md:p-12 font-sans flex flex-col justify-between pb-24 md:pb-12">
+    <div className="min-h-dvh bg-black text-white p-3.5 sm:p-6 md:p-12 font-sans flex flex-col justify-between pb-safe-nav md:pb-12">
       <div className="max-w-5xl mx-auto w-full space-y-6 sm:space-y-8">
         {/* Header matching Claude reference */}
         <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-6 flex-wrap gap-3">
@@ -100,22 +100,22 @@ export default function ProjectsPage() {
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <h1 className="text-xl sm:text-3xl font-normal text-zinc-100 font-serif">
-              Projects
-            </h1>
+            <div className="flex items-center gap-2">
+              <FolderKanban className="w-5 h-5 text-blue-400" />
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight">Projects</h1>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             {showSearch ? (
               <div className="relative flex items-center">
-                <Search className="w-4 h-4 absolute left-2.5 text-zinc-500" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter projects..."
+                  placeholder="Search projects..."
                   autoFocus
-                  className="pl-8 pr-7 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 w-44 sm:w-60"
+                  className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 w-36 sm:w-48 transition-all"
                 />
                 <button
                   onClick={() => {
@@ -159,7 +159,7 @@ export default function ProjectsPage() {
         {/* Create Modal Dialog */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto custom-scrollbar">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-blue-400" />

@@ -66,7 +66,7 @@ export default function MobileNav() {
               prefetch={true}
               onMouseEnter={() => router.prefetch(item.href)}
               onTouchStart={() => router.prefetch(item.href)}
-              className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 touch-target ${
+              className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 touch-target min-w-[48px] min-h-[48px] ${
                 isActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
               }`}
             >

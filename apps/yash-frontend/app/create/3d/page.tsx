@@ -357,10 +357,10 @@ export default function ThreeDStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans pb-24 lg:pb-0">
+    <div className="h-[100dvh] max-h-[100dvh] bg-black text-white flex flex-col font-sans pb-safe-nav lg:pb-0 overflow-hidden">
       {/* Header */}
-      <header className="h-14 border-b border-zinc-800/80 px-5 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="h-14 border-b border-zinc-800/80 px-3 sm:px-5 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <Link href="/create" className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -368,7 +368,7 @@ export default function ThreeDStudioPage() {
             <div className="w-7 h-7 rounded-lg bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <Box className="w-4 h-4" />
             </div>
-            <span className="font-bold text-sm text-zinc-100">Yash.AI 3D Studio</span>
+            <span className="font-bold text-sm text-zinc-100 hidden sm:inline">Yash.AI 3D Studio</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
               Three.js WebGL
             </span>
@@ -377,26 +377,28 @@ export default function ThreeDStudioPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAutoRotate((v) => !v)}
-            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-medium transition-all touch-target ${
               autoRotate
                 ? "bg-amber-600/20 border-amber-500/40 text-amber-400"
                 : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
             }`}
           >
-            <RotateCw className="w-3.5 h-3.5" /> {autoRotate ? "Turntable On" : "Turntable"}
+            <RotateCw className="w-3.5 h-3.5" /> <span className="hidden xs:inline">{autoRotate ? "Turntable On" : "Turntable"}</span>
           </button>
           <button
             onClick={() => setSidebarOpen((v) => !v)}
-            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors touch-target"
+            title="Toggle Inspector"
+            aria-label="Toggle Inspector"
           >
             {sidebarOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden" style={{ height: "calc(100vh - 3.5rem)" }}>
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left — Scene Hierarchy */}
-        <aside className="w-52 border-r border-zinc-800/80 bg-zinc-950/80 flex flex-col">
+        <aside className="hidden sm:flex w-52 border-r border-zinc-800/80 bg-zinc-950/80 flex-col shrink-0">
           {/* Add Primitives */}
           <div className="p-3 border-b border-zinc-800">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Add Object</p>

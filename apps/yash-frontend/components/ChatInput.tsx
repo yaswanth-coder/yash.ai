@@ -326,8 +326,9 @@ export default function ChatInput({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || uploading || isStreaming}
-              className="p-2 sm:p-2.5 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors disabled:opacity-40 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
+              className="p-2 sm:p-2.5 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors disabled:opacity-40 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer touch-target"
               title="Attach File"
+              aria-label="Attach File"
             >
               <Paperclip className="w-4 h-4" />
             </button>
@@ -338,7 +339,7 @@ export default function ChatInput({
                 type="button"
                 onClick={toggleListening}
                 disabled={disabled || isStreaming}
-                className={`relative p-2 sm:p-2.5 rounded-xl transition-all disabled:opacity-40 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+                className={`relative p-2 sm:p-2.5 rounded-xl transition-all disabled:opacity-40 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer touch-target ${
                   isListening
                     ? "bg-red-500/20 text-red-400 border border-red-500/30"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
@@ -348,6 +349,7 @@ export default function ChatInput({
                     ? "Stop voice input"
                     : "Voice input — words type into the box as you speak"
                 }
+                aria-label={isListening ? "Stop voice input" : "Start voice input"}
               >
                 {isListening ? (
                   <MicOff className="w-4 h-4" />
@@ -365,12 +367,13 @@ export default function ChatInput({
               <button
                 type="button"
                 onClick={() => onToggleWebSearch(!webSearchEnabled)}
-                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs transition-colors min-h-[36px] cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs transition-colors min-h-[44px] min-w-[44px] cursor-pointer touch-target ${
                   webSearchEnabled
                     ? "bg-blue-500/15 text-blue-400 border border-blue-500/25 font-semibold"
                     : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
                 }`}
                 title="Toggle Web Search"
+                aria-label="Toggle Web Search"
               >
                 <Globe className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
@@ -385,9 +388,10 @@ export default function ChatInput({
               <button
                 type="button"
                 onClick={onStopGeneration}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs shadow-md shadow-red-600/20 transition-all cursor-pointer min-h-[36px]"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs shadow-md shadow-red-600/20 transition-all cursor-pointer min-h-[44px] touch-target"
+                aria-label="Stop generation"
               >
-                <Square className="w-3 h-3 fill-current" />
+                <Square className="w-3.5 h-3.5 fill-current" />
                 <span>Stop</span>
               </button>
             ) : (
@@ -397,8 +401,9 @@ export default function ChatInput({
                 disabled={
                   (!message.trim() && !fileAttachment) || disabled || uploading
                 }
-                className="p-2 sm:p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-30 shadow-md shadow-blue-600/20 transition-all cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                className="p-2 sm:p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-30 shadow-md shadow-blue-600/20 transition-all cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center touch-target"
                 title="Send message"
+                aria-label="Send message"
               >
                 <ArrowUp className="w-4 h-4" />
               </button>

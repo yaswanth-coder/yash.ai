@@ -110,7 +110,7 @@ const studios = [
 export default function CreateHubPage() {
   return (
     <div
-      className="min-h-screen text-white font-sans flex flex-col pb-24 md:pb-8"
+      className="min-h-dvh text-white font-sans flex flex-col pb-safe-nav md:pb-8"
       style={{ background: "#0a0a0f" }}
     >
       {/* Top Navigation Bar */}
